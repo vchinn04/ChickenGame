@@ -1,0 +1,3 @@
+local Colonist = {}
+
+return Colonist
