@@ -118,11 +118,11 @@ function ReplicaServiceManager.CreateReplica(): nil
 			Core.Fire("PoundsUpdate")
 		end)
 
-		replica:ListenToWrite("AddHunger", function()
-			print("Added Hunger!")
-			print("New Amount: ", ReplicaServiceManager.GetData().General.Hunger)
-			Core.Fire("HungerUpdate")
-		end)
+		-- replica:ListenToWrite("AddHunger", function()
+		-- 	print("Added Hunger!")
+		-- 	print("New Amount: ", ReplicaServiceManager.GetData().General.Hunger)
+		-- 	Core.Fire("HungerUpdate")
+		-- end)
 
 		replica:ListenToWrite("RemoveHunger", function()
 			print("Removed Hunger!")

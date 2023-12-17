@@ -38,6 +38,44 @@ Basket.__index = Basket
 local BASE_TOOL_PATH: string = "Tools/BaseTool"
 --*************************************************************************************************--
 
+function Basket:AddEgg(): string?
+	if #self._egg_stack < self._max_eggs then
+		table.insert(self._egg_stack, "Egg")
+
+		local object: Accessory = self.Core.Items:FindFirstChild("Egg"):Clone()
+		if not object then
+			return
+		end
+
+		object.CFrame = self._maid.BaseTool:GetTool().Handle["Egg" .. #self._egg_stack].WorldCFrame
+			* CFrame.new(Vector3.new(0, object.Size.Y / 2, 0))
+		object.Parent = self.Core.Utils.UtilityFunctions.GetTempsFolder(self._maid.BaseTool:GetTool())
+		object.Name = "Egg" .. #self._egg_stack
+		self.Core.Utils.UtilityFunctions.AttachObject(self._maid.BaseTool:GetTool().Handle, object)
+		print("ADDING EGG TO BASKET!")
+	end
+	return
+end
+
+function Basket:ClearEggs()
+	print("Clearing Eggs!")
+	self._egg_stack = nil
+	self._egg_stack = {}
+	self.Core.Utils.UtilityFunctions.ClearTempFolder(self._maid.BaseTool:GetTool())
+end
+
+function Basket:GetEggs(): string?
+	return self._egg_stack
+end
+
+function Basket:IsEmpty(): boolean?
+	return #self._egg_stack < 1
+end
+
+function Basket:IsFull(): boolean?
+	return #self._egg_stack >= self._max_eggs
+end
+
 function Basket:EventHandler(): nil
 	return
 end
@@ -86,6 +124,9 @@ function Basket.new(player, player_object, tool_data)
 	self._player = player
 	self._tool_data = tool_data
 	self._player_object = player_object
+
+	self._max_eggs = 1
+	self._egg_stack = {}
 
 	self._maid.BaseTool = self.Core.Components[BASE_TOOL_PATH].new(player, tool_data)
 

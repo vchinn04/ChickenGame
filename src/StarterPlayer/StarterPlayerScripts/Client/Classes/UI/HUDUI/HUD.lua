@@ -29,7 +29,7 @@ function HUD:mount()
 	})
 
 	self._toolbar:mount()
-	self._stat_bars:mount()
+	-- self._stat_bars:mount()
 	print("Created HUD")
 end
 

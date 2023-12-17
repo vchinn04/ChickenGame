@@ -287,13 +287,13 @@ function DataManager.RemovePounds(player: Player, amount: number, amount_index: 
 	return true
 end
 
-function DataManager.AddHunger(player: Player, amount: number, amount_index: string?)
-	local replica: {}? = PlayerData[player].Replica
-	if replica then
-		replica:Write("AddHunger", amount, amount_index)
-	end
-	return true
-end
+-- function DataManager.AddHunger(player: Player, amount: number, amount_index: string?)
+-- 	local replica: {}? = PlayerData[player].Replica
+-- 	if replica then
+-- 		replica:Write("AddHunger", amount, amount_index)
+-- 	end
+-- 	return true
+-- end
 
 function DataManager.RemoveHunger(player: Player, amount: number, amount_index: string?)
 	local replica: {}? = PlayerData[player].Replica

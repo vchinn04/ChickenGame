@@ -118,7 +118,7 @@ PlayerClass.__index = PlayerClass
 	</Authors>
 --]]
 
-local TimedFunction = require(script:WaitForChild("TimedFunction"))
+local TimedFunction = nil
 local RagdollClass = require(script:WaitForChild("Ragdoll"))
 local ProjectileManagerClass = require(script.Parent:WaitForChild("ProjectileManager"))
 local CollectionService = game:GetService("CollectionService")
@@ -237,6 +237,30 @@ function PlayerClass:AddTool(tool_name: string, tool_object: { [string]: any }):
 	return
 end
 
+function PlayerClass:AddEgg()
+	print("ADDING EGG!")
+	if self.EquippedTool and self.EquippedTool.AddEgg then
+		self.EquippedTool:AddEgg()
+	end
+end
+
+function PlayerClass:GetEggs()
+	print("GETTING EGG!")
+	local eggs = {}
+	if self.EquippedTool and self.EquippedTool.GetEggs then
+		eggs = self.EquippedTool:GetEggs()
+	end
+	return eggs
+end
+
+function PlayerClass:ClearEggs()
+	print("CLEARING EGG!")
+	if self.EquippedTool and self.EquippedTool.ClearEggs then
+		self.EquippedTool:ClearEggs()
+	end
+	return
+end
+
 function PlayerClass:RemoveTool(tool_name: string): nil
 	if self.EquippedTool == self._tool_maid[tool_name] then
 		self.EquippedTool = nil
@@ -298,6 +322,13 @@ function PlayerClass:EquipTool(tool_name: string): nil
 end
 
 function PlayerClass:UnequipTool(tool_name: string, tool_object: Tool): nil
+	if self.EquippedTool and self.EquippedTool.IsEmpty then
+		if not self.EquippedTool:IsEmpty() then
+			print("BASKET NOT EMPTY!")
+			return false
+		end
+	end
+
 	self.Humanoid:UnequipTools()
 
 	if self.EquippedTool and self.EquippedTool.Unequip then
@@ -305,7 +336,7 @@ function PlayerClass:UnequipTool(tool_name: string, tool_object: Tool): nil
 	end
 
 	self.EquippedTool = nil
-	return
+	return true
 end
 
 function PlayerClass:UnequipAll(): nil
@@ -393,80 +424,6 @@ end
 function PlayerClass:IsStunned(): boolean
 	local stun_status: boolean = if self._player:GetAttribute("Stun") then true else false
 	return stun_status
-end
-
-function PlayerClass:DepleteHunger(): nil
-	if not self._maid.HungerObj then
-		self._maid.HungerObj = TimedFunction.new(100)
-	end
-
-	self._maid.HungerObj:StartTimer(function()
-		self.Core.Utils.Promise.promisify(self.Core.DataManager.GetPlayerData)(self._player):andThen(function(data)
-			if data and data.General and data.General.Hunger and data.General.Hunger <= 0 then
-				self:DoDamage(HUNGER_DAMAGE)
-				return
-			end
-			self.Core.Utils.Promise.promisify(
-				self.Core.DataManager.RemoveHunger(self._player, HUNGER_DEPLETION, "Hunger")
-			)
-		end)
-		self:DepleteHunger()
-	end)
-
-	return
-end
-
-function PlayerClass:AddHunger(hunger_amount: number): nil
-	self.Core.DataManager.AddHunger(self._player, hunger_amount)
-	return
-end
-
-function PlayerClass:CancelHunger(): nil
-	if self._maid.HungerObj then
-		self._maid.HungerObj:CancelTimer()
-	end
-	return
-end
-
-function PlayerClass:StartBleeding(duration: number?): nil
-	if not duration then
-		duration = DEFAULT_BLEEDING_DURATION
-	end
-
-	if not self._maid.BleedingObj then
-		self._maid.BleedingObj = TimedFunction.new(3, function()
-			if self._maid.bleed_effect then
-				self._maid.bleed_effect.Enabled = false
-			end
-		end)
-	end
-
-	if not self._maid.bleed_effect then
-		self._maid.bleed_effect = self._maid.EffectObject:CloneEffect("Bleed", self.HumanoidRootPart)[1]
-	end
-
-	if self._maid.bleed_effect then
-		self._maid.bleed_effect.Enabled = true
-	end
-
-	local bleeding_helper: () -> () = function()
-		self.Core.Utils.Promise.promisify(self.Core.DataManager.GetPlayerData)(self._player):andThen(function()
-			self:DoDamage(BLEEDING_DAMAGE)
-		end)
-		self:StartBleeding(duration - BLEEDING_INTERVAL)
-		return
-	end
-
-	self._maid.BleedingObj:StartTimer(bleeding_helper, duration)
-
-	return
-end
-
-function PlayerClass:CancelBleeding(): nil
-	if self._maid.BleedingObj then
-		self._maid.BleedingObj:CancelTimer()
-	end
-	return
 end
 
 function PlayerClass:RespawnTimer(): nil
@@ -559,7 +516,7 @@ function PlayerClass:HandleCharacter(): nil
 		end
 	end)
 
-	self:DepleteHunger()
+	-- self:DepleteHunger()
 	-- task.spawn(function()
 	-- 	while true do
 	-- 		self._maid.DeathRagdoll = RagdollClass.new(self._player, self.Character)
@@ -601,7 +558,7 @@ function PlayerClass:DeathHandler()
 	self._maid:DoCleaning()
 	self:UnequipAll()
 	self._equip_stack = {}
-	self:AddHunger(MAX_HUNGER)
+	-- self:AddHunger(MAX_HUNGER)
 	self._maid.DeathRagdoll = RagdollClass.new(self._player, self.Character)
 	self._maid.DeathRagdoll:Ragdoll(self._ragdoll_body_part_name, self._ragdoll_impulse)
 end
@@ -658,6 +615,11 @@ function PlayerClass.new(player, Core): {}
 	self._player_tools = {}
 	self._player = player
 	self.Core = Core
+
+	if not TimedFunction then
+		TimedFunction = require(self.Core.Classes.TimedFunction)
+	end
+
 	self._maid = Core.Utils.Maid.new()
 	self._tool_maid = Core.Utils.Maid.new()
 	self._spawn_position = nil

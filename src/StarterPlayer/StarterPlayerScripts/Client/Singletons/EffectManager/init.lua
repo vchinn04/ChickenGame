@@ -487,7 +487,8 @@ function EffectManager.ObstacleHit(hit_raycast_result: RaycastResult): nil
 		)
 	end
 
-	local decal_folder: Folder = Maid.MiscEffectObject:AddDecal(OBJECT_HIT_DECAL, hit_raycast_result.Instance)
+	local decal_folder: Folder =
+		Maid.MiscEffectObject:AddDecal(OBJECT_HIT_DECAL, hit_raycast_result.Instance, nil, true)
 	local tween_promises: {} = {}
 
 	for _, decal in decal_folder:GetChildren() do
@@ -645,7 +646,9 @@ function EffectManager.EventHandler(): nil
 				projectile_name: string,
 				origin_position: Vector3,
 				direction: Vector3,
-				velocity: number? | Vector3?
+				velocity: number? | Vector3?,
+				acceleration: Vector3?,
+				target: Vector3
 			): nil
 				print("CLIENT FIRE: ", tool_name)
 				if not Maid[tool_name] then
@@ -669,7 +672,7 @@ function EffectManager.EventHandler(): nil
 						Maid[tool_name] = ProjectileVisualiser.new(
 							nil,
 							bullet_template,
-							function(_, segmentOrigin, segmentDirection, length, _, cosmeticBulletObject)
+							function(active_cast, segmentOrigin, segmentDirection, length, _, cosmeticBulletObject)
 								if cosmeticBulletObject == nil then
 									return
 								end
@@ -690,6 +693,22 @@ function EffectManager.EventHandler(): nil
 									* CFrame.new(0, 0, -(length - bulletLength))
 									* CFrame.fromOrientation(math.rad(-angle), 0, 0)
 
+								if active_cast.UserData.TargetDecals then
+									local percentage_travelled = 1
+										- (
+											(cosmeticBulletObject.CFrame.Position - active_cast.UserData.Target).Magnitude
+											/ 100
+										)
+									for _, decal in active_cast.UserData.TargetDecals:GetChildren() do
+										decal.Size =
+											Vector3.new(4.5 * percentage_travelled, 4.5 * percentage_travelled, 0.1)
+
+										-- local size: number = math.random(OBJECT_HIT_MIN_SIZE, OBJECT_HIT_MAX_SIZE)
+
+										-- Maid.MiscEffectObject:TweenDecal(decal, 0.5, Vector3.new(4.5, 4.5, 0.1), 0)
+									end
+								end
+
 								return
 							end
 						)
@@ -698,7 +717,28 @@ function EffectManager.EventHandler(): nil
 					end
 				end
 
-				Maid[tool_name]:Fire(origin_position, direction, velocity, tick() - server_tick)
+				local target_decals: Folder? = nil
+				if target then
+					target_decals = Maid.MiscEffectObject:AddDecal("EggTarget", workspace, true, true)
+					-- local tween_promises: {} = {}
+
+					for _, decal in target_decals:GetChildren() do
+						decal.Size = Vector3.new(0, 0, 0.1)
+						decal.CFrame = CFrame.new(target, target + Vector3.new(0, 10, 0))
+
+						-- decal:FindFirstChildWhichIsA("Decal").Transparency = 1
+
+						-- local size: number = math.random(OBJECT_HIT_MIN_SIZE, OBJECT_HIT_MAX_SIZE)
+
+						-- Maid.MiscEffectObject:TweenDecal(decal, 0.5, Vector3.new(4.5, 4.5, 0.1), 0)
+					end
+				end
+
+				local active_cast: {} =
+					Maid[tool_name]:Fire(origin_position, direction, velocity, tick() - server_tick, acceleration)
+
+				active_cast.UserData.TargetDecals = target_decals
+				active_cast.UserData.Target = target
 				return
 			end
 		)

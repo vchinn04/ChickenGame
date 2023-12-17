@@ -23,12 +23,7 @@ local Maid
 
 function RoundManager.Start(): nil
 	local cannon = require(Core.Classes["Cannon"]).new()
-	task.spawn(function()
-		while true do
-			cannon:Fire()
-			task.wait(3)
-		end
-	end)
+	cannon:Start()
 	return
 end
 

@@ -1,4 +1,12 @@
 local ResourceData = {
+
+	Egg = {
+		Id = "Egg",
+		Category = "Resource",
+		Name = "Egg",
+		Value = 1,
+	},
+
 	-- Log = {
 	-- 	Id = "Log",
 	-- 	Category = "Resource",

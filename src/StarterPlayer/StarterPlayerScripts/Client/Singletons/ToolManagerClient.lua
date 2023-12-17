@@ -72,7 +72,7 @@ function ToolManager.EquipTool(tool_name: string): boolean
 end
 
 function ToolManager.UnequipTool(tool_name: string): boolean
-	ToolManager.UnequipAll()
+	-- ToolManager.UnequipAll()
 	Core.Utils.Net:RemoteEvent("UnequipItem"):FireServer(tool_name)
 	return true
 end

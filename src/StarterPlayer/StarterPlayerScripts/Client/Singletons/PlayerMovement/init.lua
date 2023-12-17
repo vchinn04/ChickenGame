@@ -132,7 +132,7 @@ end
 
 function PlayerMovement.CancelSprint(): nil
 	PlayerMovement.Sprint(false)
-	Maid.StaminaObject:RegenerateStamina()
+	-- Maid.StaminaObject:RegenerateStamina()
 	return
 end
 
@@ -303,7 +303,7 @@ function PlayerMovement.ActionHandler(
 				return
 			end
 			PlayerMovement.Sprint(true)
-			Maid.StaminaObject:DrainStamina()
+			-- Maid.StaminaObject:DrainStamina()
 		elseif action_name == "Jump" then
 			PlayerMovement.Jump()
 		end

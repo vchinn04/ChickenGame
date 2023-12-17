@@ -31,7 +31,8 @@ Basket.__index = Basket
 
 local BASE_TOOL_PATH: string = "Tools/BaseTool"
 local TOGGLE_REMOTE_EVENT: string = "Trigger"
-
+local SHIFTLOCK_OFFSET: Vector3 = Vector3.new(2.25, 0.25, 0)
+local SHIFT_LOCK_EVENT: string = "CameraLock"
 local ContextActionService = game:GetService("ContextActionService")
 
 --*************************************************************************************************--
@@ -49,6 +50,7 @@ end
 
 function Basket:Equip(): nil
 	self._core_maid._base_tool:Equip()
+	self.Core.Fire(SHIFT_LOCK_EVENT, true, SHIFTLOCK_OFFSET)
 
 	for _, event in self._tool_data.EquipEvents do
 		self.Core.Fire(event, true)
@@ -70,6 +72,8 @@ function Basket:Unequip(): nil
 			self.Core.Fire(event, false)
 		end
 	end
+	self.Core.Fire(SHIFT_LOCK_EVENT, false)
+
 	return
 end
 
@@ -80,6 +84,7 @@ function Basket:Destroy(): nil
 	for _, event in self._tool_data.EquipEvents do
 		self.Core.Fire(event, false)
 	end
+	self.Core.Fire(SHIFT_LOCK_EVENT, false)
 
 	self._tool_data = nil
 	self._connection_maid = nil

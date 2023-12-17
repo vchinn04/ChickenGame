@@ -49,6 +49,7 @@ function ItemDataManager.NameToId(item_name: string)
 end
 
 function ItemDataManager.GetItem(item_id)
+	print(item_id, ItemCache)
 	local table_entry = ItemCache[item_id]
 	if table_entry ~= nil then
 		return table_entry

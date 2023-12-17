@@ -141,6 +141,8 @@ function StateManager.InteractionReducer(
 		old_state.Hold = action.Hold
 	elseif action_type == "Bandage" then
 		old_state.Bandage = action.Bandage
+	elseif action_type == "Basket" then
+		old_state.Basket = action.Basket
 	end
 
 	return old_state
@@ -191,6 +193,10 @@ function StateManager.EventHandler(): nil
 
 	Maid:GiveTask(Core.Subscribe("Bandage", function(status: string, ...)
 		Core.InteractionStateManager:dispatch({ type = "Bandage", Bandage = status })
+	end))
+
+	Maid:GiveTask(Core.Subscribe("Basket", function(status: string, ...)
+		Core.InteractionStateManager:dispatch({ type = "Basket", Basket = status })
 	end))
 
 	Maid:GiveTask(Core.Subscribe("HoldInteraction", function(status: string, ...)

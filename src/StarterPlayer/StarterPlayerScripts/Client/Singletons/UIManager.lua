@@ -203,23 +203,23 @@ function UIManager.EventHandler(): nil
 		UIManager.Blind(duration)
 	end))
 
-	Maid:GiveTask(Core.Subscribe("TakeAim", function(status: boolean, _): nil
-		if status then
-			UIManager.ShaderAdjust(DEFAULT_SHADER_ADJUST_DURATION, DEFAULT_ZOOM_SHADER_SIZE, 0)
-		else
-			UIManager.ShaderAdjust(DEFAULT_SHADER_ADJUST_DURATION, DEFAULT_SHADER_SIZE, DEFAULT_SHADER_TRANSPARENCY)
-		end
-		return
-	end))
+	-- Maid:GiveTask(Core.Subscribe("TakeAim", function(status: boolean, _): nil
+	-- 	if status then
+	-- 		UIManager.ShaderAdjust(DEFAULT_SHADER_ADJUST_DURATION, DEFAULT_ZOOM_SHADER_SIZE, 0)
+	-- 	else
+	-- 		UIManager.ShaderAdjust(DEFAULT_SHADER_ADJUST_DURATION, DEFAULT_SHADER_SIZE, DEFAULT_SHADER_TRANSPARENCY)
+	-- 	end
+	-- 	return
+	-- end))
 
-	Maid:GiveTask(Core.Subscribe("Sprint", function(status: string): nil
-		if status then
-			UIManager.ShaderAdjust(DEFAULT_SHADER_ADJUST_DURATION, DEFAULT_ZOOM_SHADER_SIZE, 0)
-		else
-			UIManager.ShaderAdjust(DEFAULT_SHADER_ADJUST_DURATION, DEFAULT_SHADER_SIZE, DEFAULT_SHADER_TRANSPARENCY)
-		end
-		return
-	end))
+	-- Maid:GiveTask(Core.Subscribe("Sprint", function(status: string): nil
+	-- 	if status then
+	-- 		UIManager.ShaderAdjust(DEFAULT_SHADER_ADJUST_DURATION, DEFAULT_ZOOM_SHADER_SIZE, 0)
+	-- 	else
+	-- 		UIManager.ShaderAdjust(DEFAULT_SHADER_ADJUST_DURATION, DEFAULT_SHADER_SIZE, DEFAULT_SHADER_TRANSPARENCY)
+	-- 	end
+	-- 	return
+	-- end))
 	return
 end
 
@@ -227,12 +227,12 @@ function UIManager.Start(): nil
 	Maid.HUD = UIClasses["HUDUI/HUD"].new()
 	Maid.HUD:mount()
 
-	local ShaderClass = UIClasses["Shader"]
+	-- local ShaderClass = UIClasses["Shader"]
 
-	if ShaderClass then
-		Maid.ShaderObject = ShaderClass.new()
-		Maid.ShaderObject:mount()
-	end
+	-- if ShaderClass then
+	-- 	Maid.ShaderObject = ShaderClass.new()
+	-- 	Maid.ShaderObject:mount()
+	-- end
 
 	UIManager.EventHandler()
 	return

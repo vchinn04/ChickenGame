@@ -67,7 +67,7 @@ local USE_FUNCTIONS = {
 			return false
 		end
 
-		player_object:AddHunger(item_data.HungerAmount)
+		-- player_object:AddHunger(item_data.HungerAmount)
 
 		return true
 	end,
@@ -154,8 +154,8 @@ function ToolManager.UnequipItem(player: Player, tool_name: string): boolean
 		return false
 	end
 
-	player_object:UnequipTool(tool_name)
-	return true
+	local status: boolean? = player_object:UnequipTool(tool_name)
+	return status
 end
 
 function ToolManager.EventHandler(): nil

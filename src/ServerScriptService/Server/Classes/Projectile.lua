@@ -33,9 +33,15 @@ Projectile.__index = Projectile
 local DEFAULT_VELOCITY: number = 100
 --*************************************************************************************************--
 
-function Projectile:Fire(origin: Vector3, direction: Vector3, velocity: number? | Vector3?): {}?
+function Projectile:Fire(origin: Vector3, direction: Vector3, velocity: number? | Vector3?, acceleration: Vector3): {}?
 	if not velocity then
 		velocity = DEFAULT_VELOCITY
+	end
+
+	if acceleration then
+		self._caster_behavior.Acceleration = acceleration
+	else
+		self._caster_behavior.Acceleration = self.Core.GRAVITY_VECTOR
 	end
 
 	if self._player and not self._player:IsA("Model") then

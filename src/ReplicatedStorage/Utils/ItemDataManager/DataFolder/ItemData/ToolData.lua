@@ -332,7 +332,7 @@ local ToolData = {
 	-- },
 	["Cannon"] = {
 		Name = "Cannon",
-		SpinSpeed = 365,
+		SpinSpeed = 725,
 	},
 }
 

@@ -102,11 +102,17 @@ function EffectObject:GetEffect(effect_name: string, parent: Instance): Instance
 	return effect_clone
 end
 
-function EffectObject:GetDecal(decal_name: string, parent: Instance): Instance | { [number]: Instance }
+function EffectObject:GetDecal(
+	decal_name: string,
+	parent: Instance,
+	one_time: boolean?
+): Instance | { [number]: Instance }
 	local table_decal_name = decal_name .. "Decal"
 
-	if self._effects[parent.Name] and self._effects[parent.Name][table_decal_name] then
-		return self._effects[parent.Name][table_decal_name]
+	if not one_time then
+		if self._effects[parent.Name] and self._effects[parent.Name][table_decal_name] then
+			return self._effects[parent.Name][table_decal_name]
+		end
 	end
 
 	local decal: Instance? = self._folder:WaitForChild(decal_name, 5)
@@ -120,7 +126,9 @@ function EffectObject:GetDecal(decal_name: string, parent: Instance): Instance |
 			self._effects[parent.Name] = {}
 		end
 
-		self._effects[parent.Name][table_decal_name] = clone_decal
+		if not one_time then
+			self._effects[parent.Name][table_decal_name] = clone_decal
+		end
 		return clone_decal
 	end
 
@@ -167,8 +175,8 @@ function EffectObject:EmitAndDestroyObject(
 	return
 end
 
-function EffectObject:AddDecal(decal_name: string, decal_parent: Instance, to_anchor: boolean): nil
-	local decal_folder = self:GetDecal(decal_name, decal_parent)
+function EffectObject:AddDecal(decal_name: string, decal_parent: Instance, to_anchor: boolean, one_time: boolean?): nil
+	local decal_folder = self:GetDecal(decal_name, decal_parent, one_time)
 	if decal_folder and to_anchor then
 		for _, item in decal_folder:GetChildren() do
 			if item:IsA("BasePart") then
@@ -238,6 +246,53 @@ function EffectObject:TweenAndDestroyDecal(
 							tween:Play()
 						end)
 					end)
+			)
+		end
+	end
+
+	local combined_promise = self.Core.Utils.Promise.all(decal_stack)
+
+	return combined_promise
+end
+
+function EffectObject:TweenDecal(object: Instance, duration: number, decal_size: Vector3, max_transparency: number?): {}
+	local decal_stack: {} = {}
+
+	if not max_transparency then
+		max_transparency = 0
+	end
+
+	if object:IsA("BasePart") then
+		table.insert(
+			decal_stack,
+			self.Core.Utils.Promise.new(function(resolve)
+				local tween = TweenService:Create(object, TweenInfo.new(duration), { Size = decal_size })
+				tween.Completed:Connect(resolve)
+				tween:Play()
+			end)
+		)
+	end
+
+	for _, decal in object:GetDescendants() do
+		if decal:IsA("BasePart") then
+			table.insert(
+				decal_stack,
+				self.Core.Utils.Promise.new(function(resolve)
+					local tween = TweenService:Create(decal, TweenInfo.new(duration), { Size = decal_size })
+					tween.Completed:Connect(resolve)
+					tween:Play()
+				end)
+			)
+		else
+			decal.Transparency = 1
+			table.insert(
+				decal_stack,
+				self.Core.Utils.Promise.new(function(resolve)
+					local tween =
+						TweenService:Create(decal, TweenInfo.new(duration), { Transparency = max_transparency })
+					tween.Completed:Connect(resolve)
+					tween:Play()
+				end)
 			)
 		end
 	end

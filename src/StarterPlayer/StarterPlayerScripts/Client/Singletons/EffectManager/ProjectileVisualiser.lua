@@ -65,10 +65,17 @@ function ProjectileVisualiser:Fire(
 	origin: Vector3,
 	direction: Vector3,
 	velocity: number? | Vector3?,
-	network_delay: number?
+	network_delay: number?,
+	acceleration: Vector3?
 ): nil
 	if not velocity then
 		velocity = DEFAULT_VELOCITY
+	end
+
+	if acceleration then
+		self._caster_behavior.Acceleration = acceleration
+	else
+		self._caster_behavior.Acceleration = self.Core.GRAVITY_VECTOR
 	end
 
 	self._caster_behavior.RaycastParams.FilterDescendantsInstances = { self.Core.Character }
@@ -84,16 +91,22 @@ function ProjectileVisualiser:Fire(
 		active_cast:SetVelocity(velocity * direction.Unit) -- + network_delay * active_cast:GetAcceleration()
 	end
 
-	return
+	return active_cast
 end
 
 function ProjectileVisualiser:EventHandler(): nil
 	self._maid:GiveTask(self._caster.CastTerminating:Connect(function(caster: {})
 		local bullet_obj: Instance = caster.RayInfo.CosmeticBulletObject
+		local target_object: Folder? = caster.UserData.TargetDecals
 
 		if bullet_obj then
 			bullet_obj:Destroy()
-			bullet_obj = nil
+			caster.RayInfo.CosmeticBulletObject = nil
+		end
+
+		if target_object then
+			target_object:Destroy()
+			caster.UserData.TargetDecals = nil
 		end
 
 		return
