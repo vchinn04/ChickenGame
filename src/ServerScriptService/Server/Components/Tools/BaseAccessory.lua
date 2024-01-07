@@ -48,7 +48,7 @@ function BaseAccessory.new(player: Player, tool_data: {})
 
 	self._maid = self.Core.Utils.Maid.new()
 
-	self._maid._tool = self.Core.Items:FindFirstChild(tool_data.Name):Clone()
+	self._maid._tool = self.Core.Items:FindFirstChild(tool_data.Id):Clone()
 	self._maid._tool_accessory = self.Core.Utils.UtilityFunctions.ToAccessory(self._maid._tool:Clone())
 
 	self._maid._tool = nil

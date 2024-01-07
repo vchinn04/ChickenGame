@@ -334,6 +334,51 @@ local ToolData = {
 		Name = "Cannon",
 		SpinSpeed = 725,
 	},
+
+	["ChickenHat"] = {
+		Name = "Chicken",
+		Category = "Accessory",
+		Class = "ChickenHat",
+		SpaceAddition = 50,
+		Price = 0,
+		Weight = 10,
+	},
+
+	["FoxHat"] = {
+		Name = "Fox",
+		Category = "Accessory",
+		Class = "FoxHat",
+		SpaceAddition = 50,
+		Price = 0,
+		Weight = 10,
+	},
+
+	["BullHat"] = {
+		Name = "Bull",
+		Category = "Accessory",
+		Class = "Accessory",
+		SpaceAddition = 50,
+		Price = 0,
+		Weight = 10,
+	},
+
+	["PiggyHat"] = {
+		Name = "Piggy",
+		Category = "Accessory",
+		Class = "Accessory",
+		SpaceAddition = 50,
+		Price = 0,
+		Weight = 10,
+	},
+
+	["PlatypusHat"] = {
+		Name = "Platypus",
+		Category = "Accessory",
+		Class = "Accessory",
+		SpaceAddition = 50,
+		Price = 0,
+		Weight = 10,
+	},
 }
 
 return ToolData

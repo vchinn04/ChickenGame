@@ -125,15 +125,18 @@ function UtilityFunctions.ToAccessory(object: Tool | BasePart): Model
 end
 
 function UtilityFunctions.MakeTransparent(object: Instance): nil
+	local transparency_cache = {}
 	for _, part in object:GetDescendants() do
 		if part:IsA("BasePart") then
+			transparency_cache[part.Name] = part.Transparency
 			part.Transparency = 1
 		end
 	end
 	if object:IsA("BasePart") then
+		transparency_cache[object.Name] = object.Transparency
 		object.Transparency = 1
 	end
-	return
+	return transparency_cache
 end
 
 function UtilityFunctions.MakeVisible(object: Instance, ignore_names: { [string]: boolean }?): nil

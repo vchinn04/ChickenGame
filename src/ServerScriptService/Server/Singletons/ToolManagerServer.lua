@@ -92,18 +92,13 @@ function ToolManager.AddTool(player: Player, tool_id: string): Tool?
 
 	local tool_class: {}? = ToolClasses[tool_class_name]
 
-	local tool_object: {}? = nil
-	if tool_class then
-		tool_object = tool_class.new(player, player_object, tool_data) -- Create a new instance of the tool
-	end
-
 	local player_data: {}? = Core.DataManager.GetPlayerData(player)
 	local item_player_entry: {} = player_data.Items[tool_id]
 	if item_player_entry and not item_player_entry.Equipped then
 		Core.DataManager.RemoveSpace(player, tool_data.Weight)
 	end
 
-	player_object:AddTool(tool_name, tool_object) -- give it to player
+	local tool_object: {} = player_object:AddTool(tool_name, tool_class, tool_data)
 
 	return tool_object:GetToolObject()
 end
@@ -273,7 +268,7 @@ function ToolManager.Init(): nil
 	Core.Utils.Net:RemoteEvent("ObstacleHit")
 	Core.Utils.Net:RemoteEvent("AttackSuccess")
 	Core.Utils.Net:RemoteEvent("BulkAddition")
-
+	Core.Utils.Net:RemoteEvent("HidePlayer")
 	return
 end
 

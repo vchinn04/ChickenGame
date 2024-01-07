@@ -122,6 +122,7 @@ local TimedFunction = nil
 local RagdollClass = require(script:WaitForChild("Ragdoll"))
 local ProjectileManagerClass = require(script.Parent:WaitForChild("ProjectileManager"))
 local CollectionService = game:GetService("CollectionService")
+local EquippedToolGroupCache = {}
 
 local X_VECTOR: Vector3 = Vector3.new(1, 0, 0)
 local Y_VECTOR: Vector3 = Vector3.new(0, 1, 0)
@@ -218,14 +219,34 @@ function PlayerClass:DetachObject(object: Instance): nil
 	end
 end
 
-function PlayerClass:AddTool(tool_name: string, tool_object: { [string]: any }): nil
+function PlayerClass:AddTool(tool_name: string, tool_class: { [string]: any }, tool_data): nil
+	if self._tool_maid[tool_name] then
+		self:RemoveTool(tool_name, true)
+	end
+
+	local equip_group = tool_data.EquipGroup
+	if equip_group and EquippedToolGroupCache[equip_group] then
+		self:RemoveTool(EquippedToolGroupCache[equip_group])
+		EquippedToolGroupCache[equip_group] = nil
+	end
+
 	if #self._equip_stack >= self._MAX_EQUIP then
 		self:RemoveTool(self._equip_stack[#self._equip_stack])
 		self._equip_stack[#self._equip_stack] = nil
 	end
+
+	local tool_object: {}? = nil
+	if tool_class then
+		tool_object = tool_class.new(self._player, self, tool_data) -- Create a new instance of the tool
+	end
+
 	self._tool_maid[tool_name] = tool_object
 
 	table.insert(self._equip_stack, tool_name)
+
+	if equip_group then
+		EquippedToolGroupCache[equip_group] = tool_name
+	end
 
 	local item_id: string = self.Core.ItemDataManager.NameToId(tool_name)
 	if item_id then
@@ -234,7 +255,7 @@ function PlayerClass:AddTool(tool_name: string, tool_object: { [string]: any }):
 		self.Core.DataManager.UpdateItem(self._player, "Items/" .. tool_object:GetId() .. "/Equipped", true)
 	end
 
-	return
+	return tool_object
 end
 
 function PlayerClass:AddEgg()
@@ -261,7 +282,7 @@ function PlayerClass:ClearEggs()
 	return
 end
 
-function PlayerClass:RemoveTool(tool_name: string): nil
+function PlayerClass:RemoveTool(tool_name: string, no_update: boolean?): nil
 	if self.EquippedTool == self._tool_maid[tool_name] then
 		self.EquippedTool = nil
 	end
@@ -273,6 +294,10 @@ function PlayerClass:RemoveTool(tool_name: string): nil
 			table.remove(self._equip_stack, index)
 			break
 		end
+	end
+
+	if no_update then
+		return
 	end
 
 	local item_id: string = self.Core.ItemDataManager.NameToId(tool_name)
@@ -578,26 +603,26 @@ end
 function PlayerClass:InitialLoading(): nil
 	self.Core.DataManager.SetGeneralValue(self._player, "SpaceAddition", 0)
 
-	local space: number = 0
+	-- local space: number = 0
 	local equipped_table: {} = {}
 
-	-- for item_id, item in self.Core.DataManager.GetPlayerData(self._player).Items do
-	-- 	local item_data: {} = self.Core.ItemDataManager.GetItem(item_id)
-	-- 	if not item_data then
-	-- 		continue
-	-- 	end
+	for item_id, item in self.Core.DataManager.GetPlayerData(self._player).Items do
+		local item_data: {} = self.Core.ItemDataManager.GetItem(item_id)
+		if not item_data then
+			continue
+		end
 
-	-- 	if item.Equipped then
-	-- 		print("Old Space: ", space, " Item: ", item_id, " Amount:", item.Amount - 1, " Weight:", item_data.Weight)
-	-- 		space += (item.Amount - 1) * item_data.Weight
-	-- 		print("New Space: ", space)
-	-- 		equipped_table[item_id] = self.Core.ToolManagerServer.AddTool(self._player, item_id)
-	-- 	else
-	-- 		print("Old Space: ", space, " Item: ", item_id, " Amount:", item.Amount, " Weight:", item_data.Weight)
-	-- 		space += item.Amount * item_data.Weight
-	-- 		print("New Space: ", space)
-	-- 	end
-	-- end
+		if item.Equipped then
+			-- print("Old Space: ", space, " Item: ", item_id, " Amount:", item.Amount - 1, " Weight:", item_data.Weight)
+			-- space += (item.Amount - 1) * item_data.Weight
+			-- print("New Space: ", space)
+			equipped_table[item_id] = self.Core.ToolManagerServer.AddTool(self._player, item_id)
+			-- else
+			-- 	print("Old Space: ", space, " Item: ", item_id, " Amount:", item.Amount, " Weight:", item_data.Weight)
+			-- 	space += item.Amount * item_data.Weight
+			-- 	print("New Space: ", space)
+		end
+	end
 	self.Core.Utils.Net:RemoteEvent("BulkAddition"):FireClient(self._player, equipped_table)
 	-- self.Core.DataManager.SetGeneralValue(self._player, "Space", space)
 	return
@@ -632,6 +657,7 @@ function PlayerClass.new(player, Core): {}
 	self._random_ragdoll_z = Random.new()
 
 	self.Core.Utils.Net:RemoteEvent(`{self._player.UserId}_tool`)
+	self.Core.Utils.Net:RemoteEvent(`{self._player.UserId}_hat`)
 
 	self._player:LoadCharacter()
 	self:HandleCharacter()

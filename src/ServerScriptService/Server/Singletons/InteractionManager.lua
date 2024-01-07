@@ -55,16 +55,16 @@ local InteractionInstances = {}
 --*************************************************************************************************--
 
 function InteractionManager.CreateDrop(drop_name: string, drop_location: Vector3): Instance?
-	local drop_template: Instance = Core.Items:WaitForChild(drop_name, 3)
-	if not drop_template then
-		warn("No model for: " .. drop_name .. " found! Trace: InteractionManager.CreateDrop()")
-		return
-	end
-
 	local drop_id: string = Core.ItemDataManager.NameToId(drop_name)
 	if not drop_id then
 		drop_id = drop_name
 		warn("No data entry in ItemDataManager for: " .. drop_name .. " found! Trace: InteractionManager.CreateDrop()")
+	end
+
+	local drop_template: Instance = Core.Items:WaitForChild(drop_id, 3)
+	if not drop_template then
+		warn("No model for: " .. drop_name .. " found! Trace: InteractionManager.CreateDrop()")
+		return
 	end
 
 	local drop_item: Model = Core.Utils.UtilityFunctions.ToModel(drop_template:Clone())

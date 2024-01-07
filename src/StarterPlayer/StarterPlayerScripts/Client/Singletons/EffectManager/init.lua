@@ -92,7 +92,7 @@ local Core
 local Maid
 local Splatter3DClass, Splatter3D = nil, nil
 local EffectTable = nil
-
+local PlayerTrapsarencyCache = {}
 local MATERIAL_HIT_EFFECT_MAP = {
 	[Enum.Material.WoodPlanks] = "WoodHit",
 	[Enum.Material.Wood] = "WoodHit",
@@ -245,7 +245,9 @@ function EffectManager.TweenTranspareny(
 	object: Instance,
 	new_transparency: number?,
 	duration: number?,
-	dont_clone: boolean?
+	dont_clone: boolean?,
+	ignore_table: {}?,
+	filter_transparency: boolean?
 ): { [string]: any }
 	if not object then
 		return
@@ -255,12 +257,17 @@ function EffectManager.TweenTranspareny(
 		duration = 0.25
 	end
 
+	if not ignore_table then
+		ignore_table = {}
+	end
+
 	if not new_transparency then
 		new_transparency = 1
 	end
 
 	local promise_array: {} = {}
 	local clone_object: Instance = object
+	local transparency_cache = {}
 
 	if not dont_clone then
 		clone_object = EffectManager.CloneInstance(object)
@@ -269,17 +276,35 @@ function EffectManager.TweenTranspareny(
 	end
 
 	for _, part in clone_object:GetDescendants() do
-		if part:IsA("BasePart") then
-			if part.Parent == object then
-				part.Transparency = 0
-			end
-
-			if part.Transparency == new_transparency then
+		if part:IsA("BasePart") or part:IsA("Decal") then
+			-- if part.Parent == object then
+			-- 	part.Transparency = 0
+			-- end
+			if ignore_table[part.Name] then
 				continue
 			end
 
+			local transparency = new_transparency
+			if type(new_transparency) == "table" then
+				if new_transparency[part.Name] then
+					transparency = new_transparency[part.Name]
+				else
+					transparency = part.Transparency
+				end
+			end
+
+			if part.Transparency == transparency then
+				continue
+			end
+
+			if filter_transparency and part.Transparency >= transparency then
+				continue
+			end
+
+			transparency_cache[part.Name] = part.Transparency
+
 			local promise: {} = Core.Utils.Promise.new(function(resolve, _, _)
-				local tween = TweenService:Create(part, TweenInfo.new(duration), { Transparency = new_transparency })
+				local tween = TweenService:Create(part, TweenInfo.new(duration), { Transparency = transparency })
 
 				tween.Completed:Connect(resolve)
 				tween:Play()
@@ -289,11 +314,27 @@ function EffectManager.TweenTranspareny(
 		end
 	end
 
-	if clone_object:IsA("BasePart") then
-		if clone_object.Transparency ~= 1 then
+	if clone_object:IsA("BasePart") or clone_object:IsA("Decal") then
+		local transparency = new_transparency
+		if type(new_transparency) == "table" then
+			if new_transparency[clone_object.Name] then
+				transparency = new_transparency[clone_object.Name]
+			else
+				transparency = clone_object.Transparency
+			end
+		end
+
+		if
+			not ignore_table[clone_object.Name]
+			and (
+				clone_object.Transparency ~= transparency
+				or (filter_transparency and clone_object.Transparency < transparency)
+			)
+		then
+			transparency_cache[clone_object.Name] = clone_object.Transparency
 			local promise: {} = Core.Utils.Promise.new(function(resolve, _, _)
 				local tween =
-					TweenService:Create(clone_object, TweenInfo.new(duration), { Transparency = new_transparency })
+					TweenService:Create(clone_object, TweenInfo.new(duration), { Transparency = transparency })
 
 				tween.Completed:Connect(resolve)
 				tween:Play()
@@ -304,7 +345,7 @@ function EffectManager.TweenTranspareny(
 
 	local return_promise: {} = Core.Utils.Promise.all(promise_array)
 
-	return return_promise
+	return return_promise, transparency_cache
 end
 
 function EffectManager.TweenCFrame(
@@ -744,6 +785,22 @@ function EffectManager.EventHandler(): nil
 		)
 	)
 
+	Maid:GiveTask(
+		Core.Utils.Net
+			:RemoteEvent("HidePlayer").OnClientEvent
+			:Connect(function(status: boolean, char: Character, base_transparency: {})
+				if status then
+					if char.Name ~= Core.Player.Name then
+						_, _ = EffectManager.TweenTranspareny(char, 1, 0.25, true, { HumanoidRootPart = true })
+					else
+						_, _ = EffectManager.TweenTranspareny(char, 0.5, 0.25, true, { HumanoidRootPart = true }, true)
+					end
+				else
+					_, _ =
+						EffectManager.TweenTranspareny(char, base_transparency, 0.25, true, { HumanoidRootPart = true })
+				end
+			end)
+	)
 	return
 end
 

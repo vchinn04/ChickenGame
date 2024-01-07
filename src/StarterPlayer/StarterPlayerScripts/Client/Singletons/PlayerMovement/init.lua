@@ -105,10 +105,12 @@ local Sprint_Status: boolean = false
 local Is_Moving: boolean = false
 local Sprint_Disabled: boolean = false
 local Jump_Disabled: boolean = false
+local Double_Jump_Enable: boolean = false
 local CurrentMaterial: Enum.Material? = nil
 local LastWalkSpeedMultiplier: number = 1
 local Sprint_Disable_Status: {} = {}
 local Jump_Disable_Status: {} = {}
+local Double_Jump_Enable_Status: {} = {}
 
 local JUMP_LIMIT: number = 2
 local DEFAULT_JUMP_POWER: number = 50
@@ -225,9 +227,12 @@ function PlayerMovement.Jump(): nil
 		return
 	end
 
-	if not Core.ActionStateManager:getState()["Grounded"] and (not Can_Double_Jump or Jump_Count >= JUMP_LIMIT) then
+	local double_jump_status: boolean = not Can_Double_Jump or Jump_Count >= JUMP_LIMIT or not Double_Jump_Enable
+
+	if not Core.ActionStateManager:getState()["Grounded"] and double_jump_status then
 		return
 	end
+
 	Can_Double_Jump = false
 	Core.Humanoid.JumpPower = DEFAULT_JUMP_POWER + DEFAULT_JUMP_POWER * Jump_Count * JUMP_ADDITION_MULTIPLIER
 	Jump_Count += 1
@@ -408,6 +413,22 @@ function PlayerMovement.EventHandler(): nil
 			end
 		end)
 	)
+
+	Maid:GiveTask(Core.Subscribe("EnableDoubleJump", function(enable_source: string?, enable_status: boolean?)
+		if enable_status ~= nil then
+			Double_Jump_Enable_Status[enable_source] = enable_status
+			local enable: boolean = false
+
+			for _, i in Double_Jump_Enable_Status do
+				enable = i
+				if enable then
+					break
+				end
+			end
+
+			Double_Jump_Enable = enable
+		end
+	end))
 
 	Maid:GiveTask(Core.ActionStateManager.changed:connect(function(newState, _)
 		if newState.WalkSpeedMultiplier ~= LastWalkSpeedMultiplier then

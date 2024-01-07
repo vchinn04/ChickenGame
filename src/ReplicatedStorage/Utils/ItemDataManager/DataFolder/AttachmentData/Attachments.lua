@@ -68,6 +68,20 @@ local Attachments = {
 		OffsetRotation = Vector3.new(0, 180, 0),
 	},
 
+	["ChickenHat"] = {
+		AccessoryType = Enum.AccessoryType.Back,
+		AttachmentPoint = ATTACHMENT_POINTS.TorsoBack,
+		OffsetPosition = Vector3.new(0, -0.25, 0.43),
+		OffsetRotation = Vector3.new(0, 180, 0),
+	},
+
+	["FoxHat"] = {
+		AccessoryType = Enum.AccessoryType.Back,
+		AttachmentPoint = ATTACHMENT_POINTS.Head,
+		OffsetPosition = Vector3.new(0, -0.25, 0),
+		OffsetRotation = Vector3.new(0, 0, 0),
+	},
+
 	["Torch"] = {
 		AccessoryType = Enum.AccessoryType.Back,
 		AttachmentPoint = ATTACHMENT_POINTS.WaistCenter,

@@ -102,12 +102,14 @@ function ToolManager.UnequipAll(): nil
 end
 
 function AddItemHandler(tool_id: string, tool_obj)
+	print("ADD: ", tool_id)
 	local tool_data = Core.ItemDataManager.GetItem(tool_id)
 	local tool_class = tool_data.Class
 	local tool_name: string = tool_data.Name
 	local tool_module_class = ToolClasses[tool_class]
 	local tool_class_obj = nil
 	if tool_module_class then
+		Maid[tool_name] = nil
 		tool_class_obj = tool_module_class.new(tool_obj, tool_data)
 	end
 	Maid[tool_name] = tool_class_obj
@@ -147,6 +149,7 @@ function ToolManager.EventHandler(): nil
 	end))
 
 	Maid:GiveTask(Core.Utils.Net:RemoteEvent("BulkAddition").OnClientEvent:Connect(function(tool_table: {})
+		print("BULK ADDITION!")
 		for tool_id, tool_obj in tool_table do
 			AddItemHandler(tool_id, tool_obj)
 		end
@@ -195,6 +198,8 @@ end
 function ToolManager.Start(): nil
 	ToolManager.EventHandler()
 	Core.Utils.Net:RemoteEvent("AddItem"):FireServer("Basket")
+	Core.Utils.Net:RemoteEvent("AddItem"):FireServer("FoxHat")
+
 	return
 end
 
