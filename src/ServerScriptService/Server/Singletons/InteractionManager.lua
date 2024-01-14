@@ -39,20 +39,51 @@ local Core
 local Maid
 local CollectionService = game:GetService("CollectionService")
 
-local InteracationClasses = setmetatable({}, {
-	__index = function(self, key)
-		local class: {} = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes.Interactables, key)
-		if class then
-			self[key] = require(class)
-			return self[key]
-		end
-		return nil
-	end,
-})
+local InteracationClasses = {}
+
+-- setmetatable({}, {
+-- 	__index = function(self, key)
+-- 		local class: {} = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes.Interactables, key)
+-- 		if class then
+-- 			self[key] = require(class)
+-- 			return self[key]
+-- 		end
+-- 		return nil
+-- 	end,
+-- })
 
 local InteractionInstances = {}
 
 --*************************************************************************************************--
+
+function InteractionManager.GetInteracationClass(class_name: string): {}?
+	local interaction_class = InteracationClasses[class_name]
+
+	if interaction_class then
+		return interaction_class
+	end
+
+	local succ, res = pcall(function()
+		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes.Interactables, class_name)
+		if class then
+			local Obj = require(class)
+			InteracationClasses[class_name] = Obj
+			return Obj
+		end
+	end)
+
+	if succ then
+		if res then
+			return res
+		else
+			warn("INTERACTION CLASS: ", class_name, " NOT FOUND!")
+			return nil
+		end
+	else
+		warn("INTERACTION CLASS OBJ: ", class_name, " ERROR! ERROR: ", res)
+		return nil
+	end
+end
 
 function InteractionManager.CreateDrop(drop_name: string, drop_location: Vector3): Instance?
 	local drop_id: string = Core.ItemDataManager.NameToId(drop_name)
@@ -141,7 +172,14 @@ function InteractionManager.BinderSetup(): nil
 	for key: string, entry: {} in Core.ItemDataManager.GetInteractableData() do
 		local maid_key: string = key .. "Binder"
 		entry.Id = key
-		Maid[maid_key] = Core.Utils.Binder.new(key, InteracationClasses[entry.Class], entry)
+
+		local interaction_class: {}? = InteractionManager.GetInteracationClass(entry.Class)
+		--InteracationClasses[entry.Class]
+		if not interaction_class then
+			return
+		end
+
+		Maid[maid_key] = Core.Utils.Binder.new(key, interaction_class, entry)
 		Maid[maid_key]:GetClassAddedSignal():Connect(function(class_instance)
 			if InteractionInstances[class_instance:GetObject()] then
 				InteractionInstances[class_instance:GetObject()][key] = class_instance

@@ -97,18 +97,49 @@ local TriggerEndTable = {
 	Defaults = {},
 }
 
-local InteracationClasses = setmetatable({}, {
-	__index = function(self, key)
-		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Interactables/{key}`)
-		if class then
-			self[key] = require(class)
-			return self[key]
-		end
-		return nil
-	end,
-})
+local InteracationClasses = {}
+
+-- setmetatable({}, {
+-- 	__index = function(self, key)
+-- 		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Interactables/{key}`)
+-- 		if class then
+-- 			self[key] = require(class)
+-- 			return self[key]
+-- 		end
+-- 		return nil
+-- 	end,
+-- })
 
 --*************************************************************************************************--
+
+function InteractionManager.GetInteracationClass(class_name: string): {}?
+	local interaction_class = InteracationClasses[class_name]
+
+	if interaction_class then
+		return interaction_class
+	end
+
+	local succ, res = pcall(function()
+		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Interactables/{class_name}`)
+		if class then
+			local Obj = require(class)
+			InteracationClasses[class_name] = Obj
+			return Obj
+		end
+	end)
+
+	if succ then
+		if res then
+			return res
+		else
+			warn("INTERACTION CLASS: ", class_name, " NOT FOUND!")
+			return nil
+		end
+	else
+		warn("INTERACTION CLASS OBJ: ", class_name, " ERROR! ERROR: ", res)
+		return nil
+	end
+end
 
 function InteractionManager.Interact(object: Instance, tag: string): nil
 	print(InteractionTable.Defaults[object])
@@ -260,11 +291,13 @@ function InteractionManager.BinderSetup(): nil
 		local maid_key = key .. "Binder"
 		entry.Id = key
 
-		if not InteracationClasses[entry.Class] then
+		local interaction_class: {}? = InteractionManager.GetInteracationClass(entry.Class)
+		-- InteracationClasses[entry.Class]
+		if not interaction_class then
 			continue
 		end
 
-		local binder = Core.Utils.Binder.new(key, InteracationClasses[entry.Class], entry)
+		local binder = Core.Utils.Binder.new(key, interaction_class, entry)
 
 		binder:GetClassAddedSignal():Connect(function(class_instance)
 			Core.InteractionManager.SetDefault(

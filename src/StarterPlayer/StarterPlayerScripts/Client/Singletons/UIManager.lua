@@ -56,25 +56,27 @@ local Maid
 local UIObjTable = {}
 
 -- In charge of lazily loading in the UI classes when requested and throwing a warning if not class found
-local UIClasses = setmetatable({}, {
-	__index = function(self, obj_index)
-		local succ, res = pcall(function()
-			local ui_class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes.UI, obj_index)
-			if ui_class then
-				local Obj = require(ui_class)
-				self[obj_index] = Obj
-				return Obj
-			end
-		end)
+local UIClasses = {}
 
-		if succ then
-			return res
-		else
-			warn("UI OBJ: ", obj_index, " ERROR! ERROR: ", res)
-			return nil
-		end
-	end,
-})
+-- setmetatable({}, {
+-- 	__index = function(self, obj_index)
+-- 		local succ, res = pcall(function()
+-- 			local ui_class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes.UI, obj_index)
+-- 			if ui_class then
+-- 				local Obj = require(ui_class)
+-- 				self[obj_index] = Obj
+-- 				return Obj
+-- 			end
+-- 		end)
+
+-- 		if succ then
+-- 			return res
+-- 		else
+-- 			warn("UI OBJ: ", obj_index, " ERROR! ERROR: ", res)
+-- 			return nil
+-- 		end
+-- 	end,
+-- })
 
 local BLIND_TRANSPARENCY: number = 0.45
 
@@ -84,10 +86,39 @@ local DEFAULT_SHADER_TRANSPARENCY: number = 0.15
 local DEFAULT_SHADER_ADJUST_DURATION: number = 0.25
 --*************************************************************************************************--
 
+function UIManager.GetUI(ui_name: string): {}?
+	local frame = UIClasses[ui_name]
+
+	if frame then
+		return frame
+	end
+
+	local succ, res = pcall(function()
+		local ui_class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes.UI, ui_name)
+		if ui_class then
+			local Obj = require(ui_class)
+			UIClasses[ui_name] = Obj
+			return Obj
+		end
+	end)
+
+	if succ then
+		if res then
+			return res
+		else
+			warn("UI OBJ: ", ui_name, " NOT FOUND!")
+			return nil
+		end
+	else
+		warn("UI OBJ: ", ui_name, " ERROR! ERROR: ", res)
+		return nil
+	end
+end
+
 -- Open the current UI, create an object of its type and bring it to screen if TransformEnter exists
 --ui_name ---> Name of the UI to open
 function UIManager.OpenUI(ui_name: string, init_prop: any?): nil
-	local Class = UIClasses[ui_name] -- get the Class of the UI!
+	local Class = UIManager.GetUI(ui_name) -- UIClasses[ui_name] -- get the Class of the UI!
 
 	if Class then
 		local ui_type = Class.UIType and Class.UIType or "Default"
@@ -114,11 +145,11 @@ function UIManager.CloseUI(ui_name: string): nil
 end
 
 function UIManager.Blind(duration: number): nil
-	local Class = UIClasses["BlindScreen"]
+	local Class = UIManager.GetUI("BlindScreen") -- UIClasses["BlindScreen"]
 
 	if Class then
-		local blind_object: {} = Class.new()
-		local blind_frame: Frame = blind_object:mount():get()
+		local blind_object = Class.new()
+		local blind_frame: Frame? = blind_object:mount():get()
 
 		local blind_tween_in: Tween =
 			TweenService:Create(blind_frame, TweenInfo.new(0.15), { BackgroundTransparency = BLIND_TRANSPARENCY })
@@ -159,7 +190,7 @@ function UIManager.ShaderAdjust(duration: number, size: UDim2, transparency: num
 end
 
 function UIManager.GetCursorBar(): {}?
-	local CursorBarClass = UIClasses["CursorBar"]
+	local CursorBarClass = UIManager.GetUI("CursorBar") -- UIClasses["CursorBar"]
 
 	if CursorBarClass then
 		local cursor_bar_object = CursorBarClass.new()
@@ -171,7 +202,7 @@ function UIManager.GetCursorBar(): {}?
 end
 
 function UIManager.GetCompass(): {}?
-	local CompassClass: {} = UIClasses["Compass"]
+	local CompassClass: {} = UIManager.GetUI("Compass") -- UIClasses["Compass"]
 
 	if CompassClass then
 		local compass_object: {} = CompassClass.new()
@@ -183,7 +214,7 @@ function UIManager.GetCompass(): {}?
 end
 
 function UIManager.GetPocketWatch(): {}?
-	local WatchClass: {} = UIClasses["PocketWatch"]
+	local WatchClass: {} = UIManager.GetUI("PocketWatch") -- UIClasses["PocketWatch"]
 
 	if WatchClass then
 		local watch_object: {} = WatchClass.new()
@@ -224,7 +255,7 @@ function UIManager.EventHandler(): nil
 end
 
 function UIManager.Start(): nil
-	Maid.HUD = UIClasses["HUDUI/HUD"].new()
+	Maid.HUD = UIManager.GetUI("HUDUI/HUD").new() --  UIClasses["HUDUI/HUD"].new()
 	Maid.HUD:mount()
 
 	-- local ShaderClass = UIClasses["Shader"]

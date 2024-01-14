@@ -39,26 +39,28 @@ local Maid
 
 -- In charge of lazily loading in the Tool classes when requested and throwing a warning if not class found
 
-local ToolClasses = setmetatable({}, {
-	__index = function(self, obj_index)
-		local succ, res = pcall(function()
-			local class_object: Instance =
-				Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Tools/{obj_index}`)
-			if class_object then
-				local Obj = require(class_object)
-				self[obj_index] = Obj
-				return Obj
-			end
-		end)
+local ToolClasses = {}
 
-		if succ then
-			return res
-		else
-			warn("TOOL OBJ: ", obj_index, " ERROR! ERROR: ", res)
-			return nil
-		end
-	end,
-})
+-- setmetatable({}, {
+-- 	__index = function(self, obj_index)
+-- 		local succ, res = pcall(function()
+-- 			local class_object: Instance =
+-- 				Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Tools/{obj_index}`)
+-- 			if class_object then
+-- 				local Obj = require(class_object)
+-- 				self[obj_index] = Obj
+-- 				return Obj
+-- 			end
+-- 		end)
+
+-- 		if succ then
+-- 			return res
+-- 		else
+-- 			warn("TOOL OBJ: ", obj_index, " ERROR! ERROR: ", res)
+-- 			return nil
+-- 		end
+-- 	end,
+-- })
 
 local USE_FUNCTIONS = {
 	Consumable = function(player: Player, item_data: string)
@@ -73,6 +75,35 @@ local USE_FUNCTIONS = {
 	end,
 }
 --*************************************************************************************************--
+
+function ToolManager.GetToolClass(class_name: string): {}?
+	local tool_class = ToolClasses[class_name]
+
+	if tool_class then
+		return tool_class
+	end
+
+	local succ, res = pcall(function()
+		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Tools/{class_name}`)
+		if class then
+			local Obj = require(class)
+			ToolClasses[class_name] = Obj
+			return Obj
+		end
+	end)
+
+	if succ then
+		if res then
+			return res
+		else
+			warn("TOOL CLASS: ", class_name, " NOT FOUND!")
+			return nil
+		end
+	else
+		warn("TOOL CLASS OBJ: ", class_name, " ERROR! ERROR: ", res)
+		return nil
+	end
+end
 
 -- Add a tool to the player's backpack
 --tool_id ---> Id of the tool to add to backpack
@@ -90,7 +121,7 @@ function ToolManager.AddTool(player: Player, tool_id: string): Tool?
 		return
 	end
 
-	local tool_class: {}? = ToolClasses[tool_class_name]
+	local tool_class: {}? = ToolManager.GetToolClass(tool_class_name) -- ToolClasses[tool_class_name]
 
 	local player_data: {}? = Core.DataManager.GetPlayerData(player)
 	local item_player_entry: {} = player_data.Items[tool_id]

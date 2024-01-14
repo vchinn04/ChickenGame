@@ -51,18 +51,48 @@ local EquippedItem = nil
 -- 	["Consumable"] = true,
 -- }
 
-local ToolClasses = setmetatable({}, {
-	__index = function(self, key)
-		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Tools/{key}`)
-		if class then
-			self[key] = require(class)
-			return self[key]
-		end
-		return nil
-	end,
-})
+local ToolClasses = {}
+-- setmetatable({}, {
+-- 	__index = function(self, key)
+-- 		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Tools/{key}`)
+-- 		if class then
+-- 			self[key] = require(class)
+-- 			return self[key]
+-- 		end
+-- 		return nil
+-- 	end,
+-- })
 
 --*************************************************************************************************--
+
+function ToolManager.GetToolClass(class_name: string): {}?
+	local tool_class = ToolClasses[class_name]
+
+	if tool_class then
+		return tool_class
+	end
+
+	local succ, res = pcall(function()
+		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, `Tools/{class_name}`)
+		if class then
+			local Obj = require(class)
+			ToolClasses[class_name] = Obj
+			return Obj
+		end
+	end)
+
+	if succ then
+		if res then
+			return res
+		else
+			warn("TOOL CLASS: ", class_name, " NOT FOUND!")
+			return nil
+		end
+	else
+		warn("TOOL CLASS OBJ: ", class_name, " ERROR! ERROR: ", res)
+		return nil
+	end
+end
 
 -----------------Custom Equip/Unequip to be used if not using default toolbar-----------------
 function ToolManager.EquipTool(tool_name: string): boolean
@@ -106,7 +136,7 @@ function AddItemHandler(tool_id: string, tool_obj)
 	local tool_data = Core.ItemDataManager.GetItem(tool_id)
 	local tool_class = tool_data.Class
 	local tool_name: string = tool_data.Name
-	local tool_module_class = ToolClasses[tool_class]
+	local tool_module_class = ToolManager.GetToolClass(tool_class) --ToolClasses[tool_class]
 	local tool_class_obj = nil
 	if tool_module_class then
 		Maid[tool_name] = nil
