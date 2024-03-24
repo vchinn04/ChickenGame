@@ -146,16 +146,25 @@ local DataManager = {
 	Name = "DataManager",
 	GameVersion = "0.0.3",
 }
+local types = require(script.Parent.Parent.ServerTypes)
 local ProfileService = require(script.ProfileService)
 local ProfileTemplate = require(script.ProfileTemplate)
 local ReplicaService = require(script.ReplicaService)
 local Core
 local Maid
 local PlayerClass
-local PlayerData = {}
+
+type ReplicaT = { [any]: any }
+type ProfileT = { [any]: any }
+
+type PlayerDataT = {
+	PlayerObject: types.PlayerObject,
+	Replica: ReplicaT,
+	Profile: ProfileT,
+}
+
+local PlayerData = {} :: PlayerDataT
 local RunService = game:GetService("RunService")
-local ProjectileManagerClass
-local ProjectileManager
 local ProfileStore = ProfileService.GetProfileStore("PlayerData", ProfileTemplate)
 
 if RunService:IsStudio() then
@@ -164,11 +173,11 @@ end
 
 --*************************************************************************************************--
 
-function DataManager.GetPlayerObject(player: Player)
+function DataManager.GetPlayerObject(player: Player): types.PlayerObject?
 	if not player then
 		return nil
 	end
-	local player_entry: {}? = PlayerData[player]
+	local player_entry: PlayerDataT? = PlayerData[player]
 	return if player_entry then player_entry.PlayerObject else nil
 end
 
@@ -176,52 +185,54 @@ function DataManager.GetPlayerData(player: Player)
 	if not player then
 		return nil
 	end
-	local player_entry: {}? = PlayerData[player]
+	local player_entry: PlayerDataT? = PlayerData[player]
 	return if player_entry then player_entry.Profile.Data else nil
 end
 
-function DataManager.ShareReplica(player: Player, consumer_player: Player)
+function DataManager.ShareReplica(player: Player, consumer_player: Player): nil
 	if not player then
 		return nil
 	end
 
-	local player_entry: {}? = PlayerData[player]
+	local player_entry: PlayerDataT? = PlayerData[player]
 	if not player_entry then
 		return
 	end
 
-	local player_replica: {} = player_entry.Replica
+	local player_replica: ReplicaT? = player_entry.Replica
 	if not player_replica then
 		return
 	end
 
 	player_replica:ReplicateFor(consumer_player)
+	return
 end
 
-function DataManager.RemoveReplicaConsumer(player: Player, consumer_player: Player)
+function DataManager.RemoveReplicaConsumer(player: Player, consumer_player: Player): nil
 	if not player then
 		return nil
 	end
 
-	local player_entry: {}? = PlayerData[player]
+	local player_entry: PlayerDataT? = PlayerData[player]
 	if not player_entry then
 		return
 	end
 
-	local player_replica: {}? = player_entry.Replica
+	local player_replica: ReplicaT? = player_entry.Replica
 	if not player_replica then
 		return
 	end
 
 	player_replica:DestroyFor(consumer_player)
+	return
 end
 
-function DataManager.RemoveReplicaConsumerList(player: Player, player_list: { [Player]: boolean })
+function DataManager.RemoveReplicaConsumerList(player: Player, player_list: { [Player]: boolean }): nil
 	if not player then
 		return nil
 	end
 
-	local player_entry: {}? = PlayerData[player]
+	local player_entry: PlayerDataT? = PlayerData[player]
 	if not player_entry then
 		return
 	end
@@ -236,51 +247,59 @@ function DataManager.RemoveReplicaConsumerList(player: Player, player_list: { [P
 			player_replica:DestroyFor(consumer)
 		end
 	end
+	return
 end
 
-function DataManager.AddItem(player: Player, path_to_item: string, add_amount: number?, amount_index: string?)
-	local replica: {}? = PlayerData[player].Replica
+function DataManager.AddItem(player: Player, path_to_item: string, add_amount: number?, amount_index: string?): nil
+	local replica: ReplicaT? = PlayerData[player].Replica
 	if replica then
 		if not add_amount then
 			add_amount = 1
 		end
 		replica:Write("AddItem", path_to_item, add_amount, amount_index)
 	end
+	return
 end
 
-function DataManager.RemoveItem(player: Player, path_to_item: string, remove_amount: number?, amount_index: string?)
-	local replica: {}? = PlayerData[player].Replica
+function DataManager.RemoveItem(
+	player: Player,
+	path_to_item: string,
+	remove_amount: number?,
+	amount_index: string?
+): nil
+	local replica: ReplicaT? = PlayerData[player].Replica
 	if replica then
 		replica:Write("RemoveItem", path_to_item, remove_amount, amount_index)
 	end
+	return
 end
 
-function DataManager.DeleteEntry(player: Player, path_to_item: string)
-	local replica: {}? = PlayerData[player].Replica
+function DataManager.DeleteEntry(player: Player, path_to_item: string): boolean
+	local replica: ReplicaT? = PlayerData[player].Replica
 	if replica then
 		replica:Write("DeleteEntry", path_to_item)
 	end
 	return true
 end
 
-function DataManager.UpdateItem(player: Player, path_to_item: string, value: any) -- TODO : CONVERT TO REPLICA
-	local replica: {}? = PlayerData[player].Replica
+function DataManager.UpdateItem(player: Player, path_to_item: string, value: any): boolean -- TODO : CONVERT TO REPLICA
+	local replica: ReplicaT? = PlayerData[player].Replica
 	if replica then
 		replica:Write("UpdateItem", path_to_item, value)
 	end
 	return true
 end
 
-function DataManager.AddPounds(player: Player, amount: number, amount_index: string?)
-	local replica: {}? = PlayerData[player].Replica
+function DataManager.AddPounds(player: Player, amount: number, amount_index: string?): boolean
+	local replica: ReplicaT? = PlayerData[player].Replica
 	if replica then
 		replica:Write("AddPounds", amount, amount_index)
 	end
 	return true
 end
 
-function DataManager.RemovePounds(player: Player, amount: number, amount_index: string?)
-	local replica: {}? = PlayerData[player].Replica
+function DataManager.RemovePounds(player: Player, amount: number, amount_index: string?): boolean
+	local replica: ReplicaT? = PlayerData[player].Replica
 	if replica then
 		replica:Write("RemovePounds", amount, amount_index)
 	end
@@ -295,8 +314,8 @@ end
 -- 	return true
 -- end
 
-function DataManager.RemoveHunger(player: Player, amount: number, amount_index: string?)
-	local replica: {}? = PlayerData[player].Replica
+function DataManager.RemoveHunger(player: Player, amount: number, amount_index: string?): boolean
+	local replica: ReplicaT? = PlayerData[player].Replica
 	if replica then
 		replica:Write("RemoveHunger", amount, amount_index)
 	end
@@ -308,7 +327,7 @@ function DataManager.SetGeneralValue(player: Player, value_index: string, value:
 		return
 	end
 
-	local replica: {}? = PlayerData[player].Replica
+	local replica: ReplicaT? = PlayerData[player].Replica
 
 	if replica then
 		replica:Write("SetGeneralValue", value_index, value)
@@ -317,27 +336,35 @@ function DataManager.SetGeneralValue(player: Player, value_index: string, value:
 end
 
 function DataManager.AddSpace(player: Player, amount: number): boolean
-	local player_data: {}? = DataManager.GetPlayerData(player)
-	print(player_data, player_data.General.Space, amount, player_data.General.Space + amount)
-	DataManager.SetGeneralValue(player, "Space", player_data.General.Space + amount)
+	local player_data: types.PlayerData? = DataManager.GetPlayerData(player)
+	if player_data then
+		print(player_data, player_data.General.Space, amount, player_data.General.Space + amount)
+		DataManager.SetGeneralValue(player, "Space", player_data.General.Space + amount)
+	end
 	return true
 end
 
 function DataManager.RemoveSpace(player: Player, amount: number): boolean
-	local player_data: {}? = DataManager.GetPlayerData(player)
-	DataManager.SetGeneralValue(player, "Space", player_data.General.Space - amount)
+	local player_data: types.PlayerData? = DataManager.GetPlayerData(player)
+	if player_data then
+		DataManager.SetGeneralValue(player, "Space", player_data.General.Space - amount)
+	end
 	return true
 end
 
 function DataManager.AddSpaceAddtion(player: Player, amount: number): boolean
-	local player_data: {}? = DataManager.GetPlayerData(player)
-	DataManager.SetGeneralValue(player, "SpaceAddition", player_data.General.SpaceAddition + amount)
+	local player_data: types.PlayerData? = DataManager.GetPlayerData(player)
+	if player_data then
+		DataManager.SetGeneralValue(player, "SpaceAddition", player_data.General.SpaceAddition + amount)
+	end
 	return true
 end
 
 function DataManager.RemoveSpaceAddtion(player: Player, amount: number): boolean
-	local player_data: {}? = DataManager.GetPlayerData(player)
-	DataManager.SetGeneralValue(player, "SpaceAddition", player_data.General.SpaceAddition - amount)
+	local player_data: types.PlayerData? = DataManager.GetPlayerData(player)
+	if player_data then
+		DataManager.SetGeneralValue(player, "SpaceAddition", player_data.General.SpaceAddition - amount)
+	end
 	return true
 end
 
@@ -375,7 +402,7 @@ function DataManager.RevertProfile(player: Player, remote_player_id: number, pro
 end
 
 function DataManager.RefundUserAll(player: Player, refund_player_id: number)
-	local profile: {}? = PlayerData[player].Profile
+	local profile: ProfileT = PlayerData[player].Profile
 	local total_currency: number = profile.Data.General.RobuxCoins
 
 	for _, item: {} in profile.Data.Items do
@@ -387,8 +414,8 @@ function DataManager.RefundUserAll(player: Player, refund_player_id: number)
 	return total_currency
 end
 
-function DataManager.UpdateVersionOfProfile(profile: {})
-	local meta_data: {}? = profile.MetaData
+function DataManager.UpdateVersionOfProfile(profile: ProfileT)
+	local meta_data: { [any]: any } = profile.MetaData
 	local profile_version: string = meta_data.MetaTags["ProfileVersion"]
 
 	if profile_version ~= DataManager.GameVersion then
@@ -401,13 +428,15 @@ function DataManager.UpdateVersionOfProfile(profile: {})
 end
 
 function DataManager.DataWipe(player: Player, wiped_player_id: number)
-	local profile: {}? = PlayerData[player].Profile
-	local total_currency: number = DataManager.RefundUserAll(player, wiped_player_id)
+	local profile: ProfileT? = PlayerData[player].Profile
+	if profile then
+		local total_currency: number = DataManager.RefundUserAll(player, wiped_player_id)
 
-	profile.Data.General.RobuxCoins = total_currency
+		profile.Data.General.RobuxCoins = total_currency
 
-	DataManager.RemovePlayerData(player, wiped_player_id)
-	DataManager.GiveItem(player, wiped_player_id, "General/RobuxCoins", "RobuxCoins", "UpdateItem")
+		DataManager.RemovePlayerData(player, wiped_player_id)
+		DataManager.GiveItem(player, wiped_player_id, "General/RobuxCoins", "RobuxCoins", "UpdateItem")
+	end
 	return true
 end
 
@@ -437,18 +466,17 @@ function DataManager.ProcessProfileGlobalUpdates(player, profile)
 
 	profile.GlobalUpdates:ListenToNewLockedUpdate(function(update_id, update_data)
 		print("Processing locked global updated! ActionType: " .. update_data.UpdateAction)
-		local add_status: boolean = false
 		if true then
 			return
 		end
 		if update_data.UpdateAction == "AddItem" then
-			add_status = DataManager.AddItem(player, update_data.ItemPath)
+			DataManager.AddItem(player, update_data.ItemPath)
 		elseif update_data.UpdateAction == "RemoveItem" then
-			add_status = DataManager.RemoveItem(player, update_data.ItemPath)
+			DataManager.RemoveItem(player, update_data.ItemPath)
 		elseif update_data.UpdateAction == "UpdateItem" then
-			add_status = DataManager.UpdateItem(player, update_data.ItemPath, update_data.ValuePath, update_data.Value)
+			DataManager.UpdateItem(player, update_data.ItemPath, update_data.Value)
 		elseif update_data.UpdateAction == "DeleteEntry" then
-			add_status = DataManager.DeleteEntry(player, update_data.ItemPath)
+			DataManager.DeleteEntry(player, update_data.ItemPath)
 		end
 		profile.GlobalUpdates:ClearLockedUpdate(update_id)
 	end)
@@ -463,26 +491,6 @@ function DataManager.ProcessProfileGlobalUpdates(player, profile)
 	return true
 end
 
-function DataManager.GetProjectile(
-	projectile_id: string,
-	object: Instance?,
-	raycast_params,
-	ray_update_callback,
-	ray_hit_callback,
-	on_terminating_callback,
-	on_pierced_callback
-)
-	print(object, type(object))
-	return ProjectileManager:CreateProjectile(
-		projectile_id,
-		object,
-		raycast_params,
-		ray_update_callback,
-		ray_hit_callback,
-		on_terminating_callback,
-		on_pierced_callback
-	)
-end
 --[[	
 	<description>
 		This function is responsible for detecting players joining the game, instantiating an 
@@ -492,7 +500,7 @@ end
 --]]
 function DataManager.PlayerAddtion()
 	local function PlayerAdded(player)
-		local profile: {}? = ProfileStore:LoadProfileAsync("Player_" .. player.UserId)
+		local profile: ProfileT? = ProfileStore:LoadProfileAsync("Player_" .. player.UserId)
 		if profile ~= nil then
 			--if player.UserId == 770772041 then
 			--	print("CALLING GIVE ITEMM!!!!!")
@@ -505,15 +513,18 @@ function DataManager.PlayerAddtion()
 				if PlayerData[player].PlayerObject then
 					PlayerData[player].PlayerObject:Destroy()
 				end
+
 				if PlayerData[player] then
 					if PlayerData[player].Replica then
 						PlayerData[player].Replica:Destroy()
 					end
+
 					PlayerData[player].Replica = nil
 					PlayerData[player].PlayerObject = nil
 					PlayerData[player].Profile = nil
 					PlayerData[player] = nil
 				end
+
 				player:Kick()
 			end)
 			-- if player.Name == "RoGuruu" then
@@ -581,7 +592,7 @@ function DataManager.EventHandler()
 	-- end)
 
 	Core.Utils.Net:RemoteEvent("RespawnPlayer").OnServerEvent:Connect(function(player: Player)
-		local player_object: {}? = DataManager.GetPlayerObject(player)
+		local player_object: types.PlayerObject? = DataManager.GetPlayerObject(player)
 
 		if not player_object then
 			return
@@ -594,7 +605,7 @@ function DataManager.EventHandler()
 	end)
 
 	Core.Utils.Net:RemoteEvent("PlayerInitialLoad").OnServerEvent:Connect(function(player: Player)
-		local player_object: {}? = DataManager.GetPlayerObject(player)
+		local player_object: types.PlayerObject? = DataManager.GetPlayerObject(player)
 
 		if not player_object then
 			return
@@ -604,7 +615,7 @@ function DataManager.EventHandler()
 	end)
 
 	Core.Utils.Net:RemoteEvent("RespawnComplete").OnServerEvent:Connect(function(player: Player)
-		local player_object: {}? = DataManager.GetPlayerObject(player)
+		local player_object: types.PlayerObject? = DataManager.GetPlayerObject(player)
 
 		if not player_object then
 			return
@@ -614,7 +625,7 @@ function DataManager.EventHandler()
 	end)
 
 	Core.Utils.Net:RemoteEvent("PlayerDeath").OnServerEvent:Connect(function(player: Player)
-		local player_object: {}? = DataManager.GetPlayerObject(player)
+		local player_object: types.PlayerObject? = DataManager.GetPlayerObject(player)
 
 		if not player_object then
 			return
@@ -627,9 +638,7 @@ end
 function DataManager.Init()
 	Core = _G.Core
 	Maid = Core.Utils.Maid.new()
-	PlayerClass = require(Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, "PlayerClass"))
-	ProjectileManagerClass = require(Core.Classes["ProjectileManager"])
-	ProjectileManager = ProjectileManagerClass.new()
+	PlayerClass = require(Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes, "Player"))
 	Core.Utils.Net:RemoteEvent("Knockback")
 	Core.Utils.Net:RemoteEvent("ApplyImpulse")
 end

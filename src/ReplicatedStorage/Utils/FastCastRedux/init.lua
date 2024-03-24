@@ -49,6 +49,10 @@
 local FastCast = {}
 FastCast.DebugLogging = false
 FastCast.VisualizeCasts = false
+FastCast.ShapeModes = {
+	Block = 0,
+	Sphere = 1,
+}
 FastCast.__index = FastCast
 FastCast.__type = "FastCast" -- For compatibility with TypeMarshaller
 
@@ -129,6 +133,7 @@ function FastCast.newBehavior(): FastCastBehavior
 		CosmeticBulletTemplate = nil,
 		CosmeticBulletProvider = nil,
 		CosmeticBulletContainer = nil,
+		Shapecast = nil,
 		AutoIgnoreContainer = true,
 	}
 end

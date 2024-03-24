@@ -1,5 +1,7 @@
 local TimedFunction = {}
 TimedFunction.__index = TimedFunction
+local types = require(script.Parent.Parent.ServerTypes)
+
 --[[
 	<description>
 		This class is responsible for handling timed functions which are called after _interval time passes. 
@@ -74,17 +76,18 @@ function TimedFunction:Destroy(): nil
 	return
 end
 
-function TimedFunction.new(interval: number?, on_cancel_callback: () -> (), destroy_callback: () -> ())
-	local self = setmetatable({}, TimedFunction)
+function TimedFunction.new(
+	interval: number?,
+	on_cancel_callback: () -> ()?,
+	destroy_callback: () -> ()?
+): types.TimedFunctionObject
+	local self: types.TimedFunctionObject = setmetatable({} :: types.TimedFunctionObject, TimedFunction)
 	self.Core = _G.Core
 
-	if not interval then
-		interval = 1
-	end
-
-	self._interval = interval
+	self._interval = interval or 1
 	self._destroy_callback = destroy_callback
 	self._on_cancel_callback = on_cancel_callback
+	self._timer = nil
 
 	return self
 end

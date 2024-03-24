@@ -1,4 +1,6 @@
-local Nest = {}
+local types = require(script.Parent.Parent.Parent.ServerTypes)
+
+local Nest: types.Nest = {} :: types.Nest
 Nest.__index = Nest
 --[[
 	<description>
@@ -28,28 +30,17 @@ Nest.__index = Nest
 	</Authors>
 --]]
 
-local INTERACT_PROMPT_PATH = "Misc/InteractPrompt"
-local HEAL_AMOUNT: number = 45
+local INTERACT_PROMPT = require(script.Parent.Components.InteractPrompt)
+
 --*************************************************************************************************--
 
 function Nest:Interact(player: Player): nil
-	-- local attacked_player: Player? = self.Core.Players:GetPlayerFromCharacter(self:GetObject())
-
-	-- if not attacked_player then
-	-- 	return
-	-- end
-
-	local player_object: {} = self.Core.DataManager.GetPlayerObject(player)
+	local player_object: types.PlayerObject? = self.Core.DataManager.GetPlayerObject(player)
 
 	if not player_object then
 		return
 	end
 
-	-- self.Core.Fire("RemoveItem", player, self._data.ItemId)
-	-- self.Core.DataManager.RemoveItem(player, "Items/" .. self._data.ItemId, 1)
-
-	-- player_object:Heal(HEAL_AMOUNT)
-	-- player_object:CancelBleeding()
 	print("NEST INTERACTION!")
 	local eggs = player_object:GetEggs()
 
@@ -84,17 +75,16 @@ function Nest:Destroy(): nil
 	return
 end
 
-function Nest.new(inst, Core, interaction_data): { [string]: any }
-	local self = setmetatable({}, Nest)
-	print("CREATED NEST!")
+function Nest.new(inst, Core, interaction_data): types.NestObject
+	local self: types.NestObject = setmetatable({} :: types.NestObject, Nest)
+
 	self._instance = inst
 	self.Core = Core
 	self._maid = Core.Utils.Maid.new()
 	self._data = interaction_data
 	self._total_value = 0
 
-	self._maid.PromptManager =
-		Core.Components[INTERACT_PROMPT_PATH].new(inst, interaction_data.Name, interaction_data.PromptData)
+	self._maid.PromptManager = INTERACT_PROMPT.new(inst, interaction_data.Name, interaction_data.PromptData)
 
 	if self._data.SoundData then
 		self._maid.SoundObject = self.Core.SoundManager.Create(self._data.SoundPath)

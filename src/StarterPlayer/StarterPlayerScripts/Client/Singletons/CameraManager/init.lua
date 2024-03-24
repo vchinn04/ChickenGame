@@ -257,6 +257,16 @@ function CameraManager.EventHandler(): nil
 		Maid._shiftlock:ToggleShiftLock(status)
 	end))
 
+	Maid:GiveTask(Core.Subscribe("CameraBlur", function(duration: number?)
+		local blur_duration: number = 1.5
+
+		if duration then
+			blur_duration = duration
+		end
+
+		CameraManager.Blur(blur_duration)
+	end))
+
 	Maid:GiveTask(Core.Subscribe("TakeAim", function(status: boolean, new_fov: number)
 		if status then
 			local updated_fov = if new_fov ~= nil then new_fov else 60

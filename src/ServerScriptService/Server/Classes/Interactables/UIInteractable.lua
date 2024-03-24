@@ -1,4 +1,6 @@
-local UIInteractable = {}
+local types = require(script.Parent.Parent.Parent.ServerTypes)
+
+local UIInteractable: types.UIInteractable = {} :: types.UIInteractable
 UIInteractable.__index = UIInteractable
 --[[
 	<description>
@@ -14,11 +16,11 @@ UIInteractable.__index = UIInteractable
 	</Authors>
 --]]
 
-local INTERACT_PROMPT_PATH = "Misc/InteractPrompt"
+local INTERACT_PROMPT = require(script.Parent.Components.InteractPrompt)
 
 --*************************************************************************************************--
 
-function UIInteractable:Interact(): nil
+function UIInteractable:Interact(_): nil
 	return
 end
 
@@ -34,14 +36,25 @@ function UIInteractable:GetPromptPart(): Instance?
 	return self._maid.PickupPromptManager:GetPromptParent()
 end
 
-function UIInteractable.new(inst, Core, interaction_data): { [string]: any }
-	local self = setmetatable({}, UIInteractable)
+function UIInteractable:Destroy(): nil
+	print("Destroy Drop Client!")
+	self._maid:DoCleaning()
+	self._instance = nil
+	self._maid = nil
+	self._data = nil
+	self.Core = nil
+	self = nil
+	return
+end
+
+function UIInteractable.new(inst, Core, interaction_data): types.UIInteractableObject
+	local self: types.UIInteractableObject = setmetatable({} :: types.UIInteractableObject, UIInteractable)
 	self._instance = inst
 	self.Core = Core
 	self._maid = Core.Utils.Maid.new()
 	self._data = interaction_data
 
-	local ui_prompt_data = {
+	local ui_prompt_data: types.InteractPromptData = {
 		KeyCode = if interaction_data.PromptData and interaction_data.PromptData.KeyCode
 			then interaction_data.PromptData.KeyCode
 			else Enum.KeyCode.E,
@@ -59,21 +72,9 @@ function UIInteractable.new(inst, Core, interaction_data): { [string]: any }
 			else "Open " .. inst.Name,
 	}
 
-	self._maid.PickupPromptManager =
-		Core.Components[INTERACT_PROMPT_PATH].new(inst, interaction_data.Name, ui_prompt_data, true, 0.95)
+	self._maid.PickupPromptManager = INTERACT_PROMPT.new(inst, interaction_data.Name, ui_prompt_data, true, 0.95)
 
 	return self
-end
-
-function UIInteractable:Destroy(): nil
-	print("Destroy Drop Client!")
-	self._maid:DoCleaning()
-	self._instance = nil
-	self._maid = nil
-	self._data = nil
-	self.Core = nil
-	self = nil
-	return
 end
 
 return UIInteractable

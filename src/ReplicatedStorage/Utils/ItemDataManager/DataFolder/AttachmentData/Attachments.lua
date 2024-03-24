@@ -82,6 +82,27 @@ local Attachments = {
 		OffsetRotation = Vector3.new(0, 0, 0),
 	},
 
+	["BullHat"] = {
+		AccessoryType = Enum.AccessoryType.Back,
+		AttachmentPoint = ATTACHMENT_POINTS.Head,
+		OffsetPosition = Vector3.new(0, -0.25, 0),
+		OffsetRotation = Vector3.new(0, 0, 0),
+	},
+
+	["PiggyHat"] = {
+		AccessoryType = Enum.AccessoryType.Back,
+		AttachmentPoint = ATTACHMENT_POINTS.Head,
+		OffsetPosition = Vector3.new(0, -0.25, 0),
+		OffsetRotation = Vector3.new(0, 0, 0),
+	},
+
+	["PlatypusHat"] = {
+		AccessoryType = Enum.AccessoryType.Back,
+		AttachmentPoint = ATTACHMENT_POINTS.Head,
+		OffsetPosition = Vector3.new(0, -0.25, 0),
+		OffsetRotation = Vector3.new(0, 0, 0),
+	},
+
 	["Torch"] = {
 		AccessoryType = Enum.AccessoryType.Back,
 		AttachmentPoint = ATTACHMENT_POINTS.WaistCenter,

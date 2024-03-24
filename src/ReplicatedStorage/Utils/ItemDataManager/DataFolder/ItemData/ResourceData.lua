@@ -2,8 +2,22 @@ local ResourceData = {
 
 	Egg = {
 		Id = "Egg",
-		Category = "Resource",
+		Category = "Egg",
 		Name = "Egg",
+		Value = 1,
+	},
+
+	Gold = {
+		Id = "Gold",
+		Category = "Egg",
+		Name = "Golden Egg",
+		Value = 1,
+	},
+
+	Piano = {
+		Id = "Piano",
+		Category = "Destructable",
+		Name = "Piano",
 		Value = 1,
 	},
 

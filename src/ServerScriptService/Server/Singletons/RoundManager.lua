@@ -23,6 +23,13 @@ local Maid
 
 function RoundManager.Start(): nil
 	local cannon = require(Core.Classes["Cannon"]).new()
+	local obstacle_field = require(Core.Classes.Obstacles["ObstacleField"]).new(
+		4,
+		Vector3.new(117.761, 0.365, -113.154),
+		Vector3.new(0, 0, 0),
+		"ClassicObstacles"
+	)
+	obstacle_field:GenerateField()
 	cannon:Start()
 	return
 end

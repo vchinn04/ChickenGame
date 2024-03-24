@@ -1,3 +1,4 @@
+--!strict
 local Accessory = {
 	Name = "Accessory",
 }
@@ -29,7 +30,8 @@ Accessory.__index = Accessory
 	</Authors>
 --]]
 
-local BASE_ACCESSORY_PATH: string = "Tools/BaseAccessory"
+local types = require(script.Parent.Parent.Parent.ServerTypes)
+local BASE_ACCESSORY: types.BaseAccessory = require(script.Parent.Components.BaseAccessory)
 --*************************************************************************************************--
 
 function Accessory:EventHandler(): nil
@@ -50,17 +52,21 @@ end
 function Accessory:Destroy(): nil
 	self._maid:DoCleaning()
 
-	self._maid = nil
+	self._maid = nil :: any
 	self._player = nil
 	self._tool_data = nil
 	self._player_object = nil
-	self = nil
+	self = nil :: any
 
 	return
 end
 
-function Accessory.new(player, player_object, tool_data)
-	local self = setmetatable({}, Accessory)
+function Accessory.new(
+	player: Player,
+	player_object: types.PlayerObject,
+	tool_data: types.ToolData
+): types.AccessoryObject
+	local self: types.AccessoryObject = setmetatable({} :: types.AccessoryObject, Accessory)
 
 	self.Core = _G.Core
 
@@ -70,7 +76,7 @@ function Accessory.new(player, player_object, tool_data)
 	self._tool_data = tool_data
 	self._player_object = player_object
 
-	self._maid.BaseAccessory = self.Core.Components[BASE_ACCESSORY_PATH].new(player, tool_data)
+	self._maid.BaseAccessory = BASE_ACCESSORY.new(player, tool_data)
 
 	return self
 end

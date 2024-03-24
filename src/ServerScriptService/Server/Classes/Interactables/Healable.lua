@@ -28,7 +28,7 @@ Healable.__index = Healable
 	</Authors>
 --]]
 
-local INTERACT_PROMPT_PATH = "Misc/InteractPrompt"
+local INTERACT_PROMPT = require(script.Parent.Components.InteractPrompt)
 local HEAL_AMOUNT: number = 45
 --*************************************************************************************************--
 
@@ -76,8 +76,7 @@ function Healable.new(inst, Core, interaction_data): { [string]: any }
 	self._maid = Core.Utils.Maid.new()
 	self._data = interaction_data
 
-	self._maid.PromptManager =
-		Core.Components[INTERACT_PROMPT_PATH].new(inst, interaction_data.Name, interaction_data.PromptData)
+	self._maid.PromptManager = INTERACT_PROMPT.new(inst, interaction_data.Name, interaction_data.PromptData)
 
 	if self._data.SoundData then
 		self._maid.SoundObject = self.Core.SoundManager.Create(self._data.SoundPath)

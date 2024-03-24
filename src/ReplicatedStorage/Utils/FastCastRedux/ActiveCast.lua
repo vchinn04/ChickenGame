@@ -222,7 +222,18 @@ local function SimulateCast(cast: ActiveCast, delta: number, expectingShortCall:
 
 	local rayDir = totalDisplacement.Unit * segmentVelocity.Magnitude * delta
 	local targetWorldRoot = cast.RayInfo.WorldRoot
-	local resultOfCast = targetWorldRoot:Raycast(lastPoint, rayDir, cast.RayInfo.Parameters)
+	local resultOfCast = nil --targetWorldRoot:Raycast(lastPoint, rayDir, cast.RayInfo.Parameters)
+	if cast.RayInfo.Shapecast then
+		local shapecast_info = cast.RayInfo.Shapecast
+		if shapecast_info.Shape == 0 then
+			resultOfCast =
+				targetWorldRoot:Blockcast(CFrame.new(lastPoint), shapecast_info.Size, rayDir, cast.RayInfo.Parameters)
+		else
+			resultOfCast = targetWorldRoot:Spherecast(lastPoint, shapecast_info.Size, rayDir, cast.RayInfo.Parameters)
+		end
+	else
+		resultOfCast = targetWorldRoot:Raycast(lastPoint, rayDir, cast.RayInfo.Parameters)
+	end
 
 	local point = currentTarget
 	local part: Instance? = nil
@@ -333,7 +344,27 @@ local function SimulateCast(cast: ActiveCast, delta: number, expectingShortCall:
 					local subVelocity =
 						GetVelocityAtTime(lastDelta + (timeIncrement * segmentIndex), initialVelocity, acceleration)
 					local subRayDir = subVelocity * delta
-					local subResult = targetWorldRoot:Raycast(subPosition, subRayDir, cast.RayInfo.Parameters)
+					local subResult = nil -- targetWorldRoot:Raycast(subPosition, subRayDir, cast.RayInfo.Parameters)
+					if cast.RayInfo.Shapecast then
+						local shapecast_info = cast.RayInfo.Shapecast
+						if shapecast_info.Shape == 0 then
+							resultOfCast = targetWorldRoot:Blockcast(
+								CFrame.new(subPosition),
+								shapecast_info.Size,
+								subRayDir,
+								cast.RayInfo.Parameters
+							)
+						else
+							resultOfCast = targetWorldRoot:Spherecast(
+								subPosition,
+								shapecast_info.Size,
+								subRayDir,
+								cast.RayInfo.Parameters
+							)
+						end
+					else
+						resultOfCast = targetWorldRoot:Raycast(subPosition, subRayDir, cast.RayInfo.Parameters)
+					end
 
 					local subDisplacement = (subPosition - (subPosition + subVelocity)).Magnitude
 
@@ -452,8 +483,18 @@ local function SimulateCast(cast: ActiveCast, delta: number, expectingShortCall:
 				SendRayPierced(cast, resultOfCast, segmentVelocity, cast.RayInfo.CosmeticBulletObject)
 
 				-- List has been updated, so let's cast again.
-				resultOfCast = targetWorldRoot:Raycast(lastPoint, rayDir, params)
-
+				--resultOfCast = targetWorldRoot:Raycast(lastPoint, rayDir, params)
+				if cast.RayInfo.Shapecast then
+					local shapecast_info = cast.RayInfo.Shapecast
+					if shapecast_info.Shape == 0 then
+						resultOfCast =
+							targetWorldRoot:Blockcast(CFrame.new(lastPoint), shapecast_info.Size, rayDir, params)
+					else
+						resultOfCast = targetWorldRoot:Spherecast(lastPoint, shapecast_info.Size, rayDir, params)
+					end
+				else
+					resultOfCast = targetWorldRoot:Raycast(lastPoint, rayDir, params)
+				end
 				-- No hit? No simulation. Break.
 				if resultOfCast == nil then
 					break
@@ -558,6 +599,7 @@ function ActiveCastStatic.new(
 
 		-- Information pertaining to actual raycasting.
 		RayInfo = {
+			Shapecast = castDataPacket.Shapecast,
 			Parameters = castDataPacket.RaycastParams,
 			WorldRoot = workspace,
 			MaxDistance = castDataPacket.MaxDistance or 1000,
@@ -681,8 +723,24 @@ function ActiveCastStatic.new(
 
 			local rayDir = totalDisplacement.Unit * currentVelocity.Magnitude * delta
 			local targetWorldRoot = cast.RayInfo.WorldRoot
-			local resultOfCast = targetWorldRoot:Raycast(lastPoint, rayDir, cast.RayInfo.Parameters)
+			local resultOfCast = nil
 
+			if cast.RayInfo.Shapecast then
+				local shapecast_info = cast.RayInfo.Shapecast
+				if shapecast_info.Shape == 0 then
+					resultOfCast = targetWorldRoot:Blockcast(
+						CFrame.new(lastPoint),
+						shapecast_info.Size,
+						rayDir,
+						cast.RayInfo.Parameters
+					)
+				else
+					resultOfCast =
+						targetWorldRoot:Spherecast(lastPoint, shapecast_info.Size, rayDir, cast.RayInfo.Parameters)
+				end
+			else
+				resultOfCast = targetWorldRoot:Raycast(lastPoint, rayDir, cast.RayInfo.Parameters)
+			end
 			local point = currentPoint
 
 			if resultOfCast ~= nil then

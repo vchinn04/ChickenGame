@@ -201,30 +201,6 @@ function UIManager.GetCursorBar(): {}?
 	return
 end
 
-function UIManager.GetCompass(): {}?
-	local CompassClass: {} = UIManager.GetUI("Compass") -- UIClasses["Compass"]
-
-	if CompassClass then
-		local compass_object: {} = CompassClass.new()
-		compass_object:mount()
-		return compass_object
-	end
-
-	return
-end
-
-function UIManager.GetPocketWatch(): {}?
-	local WatchClass: {} = UIManager.GetUI("PocketWatch") -- UIClasses["PocketWatch"]
-
-	if WatchClass then
-		local watch_object: {} = WatchClass.new()
-		watch_object:mount()
-		return watch_object
-	end
-
-	return
-end
-
 function UIManager.EventHandler(): nil
 	Maid:GiveTask(Core.Subscribe("OpenUI", function(ui_name: string, init_prop: any?)
 		UIManager.OpenUI(ui_name, init_prop)
@@ -255,8 +231,8 @@ function UIManager.EventHandler(): nil
 end
 
 function UIManager.Start(): nil
-	Maid.HUD = UIManager.GetUI("HUDUI/HUD").new() --  UIClasses["HUDUI/HUD"].new()
-	Maid.HUD:mount()
+	-- Maid.HUD = UIManager.GetUI("HUDUI/HUD").new() --  UIClasses["HUDUI/HUD"].new()
+	-- Maid.HUD:mount()
 
 	-- local ShaderClass = UIClasses["Shader"]
 

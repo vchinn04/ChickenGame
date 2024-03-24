@@ -41,7 +41,7 @@ Lootable.__index = Lootable
 	</Authors>
 --]]
 
-local INTERACT_PROMPT_PATH = "Misc/InteractPrompt"
+local INTERACT_PROMPT = require(script.Parent.Components.InteractPrompt)
 
 --*************************************************************************************************--
 function Lootable:Register(player: Player): nil
@@ -108,8 +108,7 @@ function Lootable.new(inst, Core, interaction_data): { [string]: any }
 		ActionText = "Loot " .. inst.Name,
 	}
 
-	self._maid.PickupPromptManager =
-		Core.Components[INTERACT_PROMPT_PATH].new(inst, interaction_data.Name, lootable_prompt_data, true, 0.95)
+	self._maid.PickupPromptManager = INTERACT_PROMPT.new(inst, interaction_data.Name, lootable_prompt_data, true, 0.95)
 
 	return self
 end

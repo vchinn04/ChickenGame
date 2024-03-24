@@ -248,7 +248,7 @@ do
 
 	Core.Classes = script.Classes -- Folder of classes
 	Core.Managers = ImmediateRequire(script.Singletons, true) -- Load in the singletons immediatetly
-	Core.CooldownClass = Core.Components["Misc/CooldownClass"]
+	Core.CooldownClass = Core.Utils.CooldownClass
 	Core.Character = Core.Player.Character or Core.Player.CharacterAdded:Wait()
 	Core.Humanoid = Core.Character:WaitForChild("Humanoid")
 	Core.Humanoid.BreakJointsOnDeath = false

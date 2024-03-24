@@ -35,6 +35,7 @@ local SHIFTLOCK_OFFSET: Vector3 = Vector3.new(2.25, 0.25, 0)
 local SHIFT_LOCK_EVENT: string = "CameraLock"
 local ContextActionService = game:GetService("ContextActionService")
 
+local types = require(script.Parent.Parent.Parent.ClientTypes)
 --*************************************************************************************************--
 
 function Basket:GetId(): string?
@@ -48,65 +49,35 @@ function Basket:UserInput(): nil
 	return
 end
 
-function Basket:Equip(): nil
-	self._core_maid._base_tool:Equip()
-	self.Core.Fire(SHIFT_LOCK_EVENT, true, SHIFTLOCK_OFFSET)
-
-	for _, event in self._tool_data.EquipEvents do
-		self.Core.Fire(event, true)
-	end
-
-	self:UserInput()
-	return
-end
-
-function Basket:Unequip(): nil
-	if self._connection_maid then
-		self._connection_maid:DoCleaning()
-	end
-	if self._core_maid and self._core_maid._base_tool then
-		self._core_maid._base_tool:Unequip()
-	end
-	if self._tool_data then
-		for _, event in self._tool_data.EquipEvents do
-			self.Core.Fire(event, false)
-		end
-	end
-	self.Core.Fire(SHIFT_LOCK_EVENT, false)
-
-	return
-end
-
 function Basket:Destroy(): nil
-	self._connection_maid:DoCleaning()
-	self._core_maid:DoCleaning()
+	self._maid:DoCleaning()
 
 	for _, event in self._tool_data.EquipEvents do
 		self.Core.Fire(event, false)
 	end
-	self.Core.Fire(SHIFT_LOCK_EVENT, false)
 
 	self._tool_data = nil
-	self._connection_maid = nil
 	self._tool = nil
-	self._core_maid = nil
+	self._maid = nil
 	self = nil
 
 	return
 end
 
-function Basket.new(tool_obj: Tool, tool_data: { [string]: any }): {}
-	local self = setmetatable({}, Basket)
+function Basket.new(tool_obj: Tool, tool_data: types.ToolData): types.BasketObject
+	local self: types.BasketObject = setmetatable({} :: types.BasketObject, Basket)
 	self.Core = _G.Core
 
 	self._tool_data = tool_data
 	self._tool = tool_obj
 
-	self._core_maid = self.Core.Utils.Maid.new()
-	self._connection_maid = self.Core.Utils.Maid.new()
+	self._maid = self.Core.Utils.Maid.new()
 
-	self._core_maid.Animator = self.Core.AnimationHandler.Create(tool_data.AnimationData, tool_data.AnimationPath)
-	self._core_maid._base_tool = self.Core.Components[BASE_TOOL_PATH].new(tool_obj, tool_data, self._core_maid.Animator)
+	self._maid.Animator = self.Core.AnimationHandler.Create(tool_data.AnimationData, tool_data.AnimationPath)
+
+	for _, event in self._tool_data.EquipEvents do
+		self.Core.Fire(event, true)
+	end
 
 	return self
 end

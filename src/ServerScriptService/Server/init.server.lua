@@ -4,14 +4,14 @@ print("————————————————————————�
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utils = ReplicatedStorage:WaitForChild("Utils")
-local Types = require(ReplicatedStorage:WaitForChild("Utils"):WaitForChild("ClientTypes"))
 local PhysicsService = game:GetService("PhysicsService")
+local types = require(script:WaitForChild("ServerTypes"))
 
 local Core = {}
 Core.GoodSignal = nil
 
 export type EventTableType = typeof(setmetatable({}, {
-	__index = function(self, key: string): Types.singleton
+	__index = function(self, key: string)
 		self[key] = Core.GoodSignal.new()
 		return self[key]
 	end,
@@ -27,7 +27,7 @@ export type EventTableType = typeof(setmetatable({}, {
 -- Store a global even dictionary
 -- Each event entry is a GoodSignal object.
 local EventTable: EventTableType = setmetatable({}, {
-	__index = function(self, key: string): Types.singleton
+	__index = function(self, key: string)
 		self[key] = Core.GoodSignal.new()
 		return self[key]
 	end,
@@ -37,7 +37,7 @@ local EventTable: EventTableType = setmetatable({}, {
 -- event_name -> Name of the event you are firing
 -- ... -> the arguments passed to the callbacks. (Core.Fire is a variadic function). Arguments have to passed in an array, the order has to be the order of callback params.
 Core.Fire = function(event_name: string, ...: any): nil
-	local event_obj: Types.singleton = EventTable[event_name]
+	local event_obj = EventTable[event_name]
 	local args = { ... }
 
 	local succ, err = pcall(function()
@@ -52,14 +52,14 @@ end
 -- Subscribe to specified event in global event system
 -- event_name -> Name of the event you are subscribing to
 -- callback -> the callback function that will be added to table and called whenever event is fired.
-Core.Subscribe = function(event_name: string, callback: (...any) -> nil): Types.singleton
-	local event_obj: Types.singleton = EventTable[event_name]
+Core.Subscribe = function(event_name: string, callback: (...any) -> nil)
+	local event_obj = EventTable[event_name]
 	return event_obj:Connect(callback)
 end
 
 -- Unsubscribe from specified event in global event system
 -- call_back_obj -> Event object to disconnect
-Core.Unsubscribe = function(call_back_obj: Types.singleton): nil
+Core.Unsubscribe = function(call_back_obj): nil
 	call_back_obj:Disconnect()
 	return
 end
@@ -68,13 +68,13 @@ end
 -- Folder -> Folder where modules located
 -- set_core -> determines if the object should have the core attribute set
 
-function ImmediateRequire(Folder: Folder, set_core: boolean): { [string]: Types.singleton }?
+function ImmediateRequire(Folder: Folder, set_core: boolean)
 	local returnDict = {}
 
 	for _, Module in pairs(Folder:GetChildren()) do
 		if not string.match(Module.Name, "Disabled") then
 			print(Module)
-			local Obj: Types.singleton = require(Module) :: any
+			local Obj = require(Module) :: any
 			if set_core then
 				Obj.Core = Core
 			end
@@ -88,24 +88,24 @@ end
 -- Returns a dictionary with a metatable that requires a module only when it is called
 -- Folder -> Folder where modules located. Can contain subfolders.
 
-function LazyLoader(Folder: Folder): (Types.metatable & { [string]: Types.singleton })?
+function LazyLoader(Folder: Folder)
 	return setmetatable({}, {
-		__index = function(self, module_path: string): Types.singleton?
-			local succ, res = pcall(function(): Types.singleton?
+		__index = function(self, module_path: string)
+			local succ, res = pcall(function()
 				if not string.match(module_path, "Disabled") then
 					local path_list: { [number]: string } = string.split(module_path, "/")
-					local cur_entry: Instance = Folder
+					local cur_entry: Instance? = Folder
 
 					for _, key in path_list do
-						cur_entry = cur_entry:WaitForChild(key, 5)
 						if not cur_entry then
 							return nil
 						end
+						cur_entry = cur_entry:WaitForChild(key, 5)
 					end
 
-					local Obj: Types.singleton = require(cur_entry) :: any
+					local Obj = require(cur_entry)
 
-					if type(Obj) == table then
+					if type(Obj) == "table" then
 						Obj.Core = Core
 					end
 
@@ -130,7 +130,7 @@ end
 -- Calls the init function of the specified modules if it exists
 -- Objects -> table of modules to instantiate
 
-function InitModules(Objects: { [string | number]: Types.singleton }): nil
+function InitModules(Objects): nil
 	for _, Obj in pairs(Objects) do
 		if Obj.Init then
 			task.spawn(function()
@@ -152,7 +152,7 @@ end
 -- Calls the start function of the specified modules if it exists
 -- Objects -> table of modules to start
 
-function StartModules(Objects: { [string | number]: Types.singleton }): nil
+function StartModules(Objects): nil
 	for _, Obj in pairs(Objects) do
 		if Obj.Start then
 			task.spawn(function()
@@ -173,7 +173,7 @@ end
 -- Calls the reset function of the specified modules if it exists
 -- Objects -> table of modules to reset
 
-function ResetModules(Objects: { [string | number]: Types.singleton }): nil
+function ResetModules(Objects): nil
 	for i, Obj in pairs(Objects) do
 		if Obj.Reset then
 			task.spawn(function()
@@ -218,8 +218,8 @@ do
 
 	Core.Players = game:GetService("Players")
 	Core.Players.CharacterAutoLoads = false
-	Core.Resources = ReplicatedStorage:WaitForChild("Resources")
-	Core.DataModules = ReplicatedStorage:WaitForChild("DataModules")
+	Core.Resources = ReplicatedStorage:WaitForChild("Resources") :: Folder
+	Core.DataModules = ReplicatedStorage:WaitForChild("DataModules") :: Folder
 	Core.GRAVITY_VECTOR = Vector3.new(0, -15, 0)
 	--Core.Events = Core.Resources:WaitForChild("Events")
 	--Core.Sounds = Core.Resources:WaitForChild("Sounds")
@@ -227,11 +227,11 @@ do
 
 	--Core.Items = Core.Resources:WaitForChild("Items")
 	--Core.Particles = Core.Resources:WaitForChild("Particles")
-	Core.AnimationFolder = Core.Resources:WaitForChild("Animations")
-	Core.EffectsFolder = Core.Resources:WaitForChild("Effects")
+	Core.AnimationFolder = Core.Resources:WaitForChild("Animations") :: Folder
+	Core.EffectsFolder = Core.Resources:WaitForChild("Effects") :: Folder
 
-	Core.SoundFolder = Core.Resources:WaitForChild("Sounds")
-	Core.Items = Core.Resources:WaitForChild("Items")
+	Core.SoundFolder = Core.Resources:WaitForChild("Sounds") :: Folder
+	Core.Items = Core.Resources:WaitForChild("Items") :: Folder
 	--Core.UI = Core.Resources:WaitForChild("UI")
 	--Core.PlayerData = require(Core.Resources:WaitForChild("Modules"):WaitForChild("ModuleScript"))
 
@@ -242,7 +242,7 @@ do
 
 	--Core.MainData = Core.Modules.Shared.MainData
 	--Core.Module3D = Core.Modules.Private.Module3D
-	Core.Components = LazyLoader(script.Components)
+	-- Core.Components = LazyLoader(script.Components)
 	Core.Classes = script.Classes
 	Core.Utils = UtilRequire(Utils)
 	Core.ItemDataManager = Core.Utils.ItemDataManager
@@ -250,6 +250,7 @@ do
 
 	Core.Managers = ImmediateRequire(script.Singletons, true)
 
+	Core.CooldownClass = Core.Utils.CooldownClass
 	--Core.MainGui = Core.Player.PlayerGui:WaitForChild("MainGui")
 	Core.Length = function(Table)
 		local counter = 0
@@ -270,7 +271,7 @@ do
 	Core.ItemDataManager.GenerateCache()
 	StartModules(Core.Managers)
 
-	print("————————————————————————————————")
-	print("—————Init/Starting Complete—————")
+	print("—————————��——————————————————————")
+	print("—————Init/Starting Complete��————")
 	print("———————————���————————————————————")
 end

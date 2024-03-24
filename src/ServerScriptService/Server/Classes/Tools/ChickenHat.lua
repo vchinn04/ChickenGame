@@ -29,7 +29,8 @@ ChickenHat.__index = ChickenHat
 	</Authors>
 --]]
 
-local BASE_ACCESSORY_PATH: string = "Tools/BaseAccessory"
+local types = require(script.Parent.Parent.Parent.ServerTypes)
+local BASE_ACCESSORY: types.BaseAccessory = require(script.Parent.Components.BaseAccessory)
 --*************************************************************************************************--
 
 function ChickenHat:EventHandler(): nil
@@ -59,18 +60,17 @@ function ChickenHat:Destroy(): nil
 	return
 end
 
-function ChickenHat.new(player, player_object, tool_data)
-	local self = setmetatable({}, ChickenHat)
+function ChickenHat.new(player, player_object, tool_data): types.ChickenHatObject
+	local self: types.ChickenHatObject = setmetatable({} :: types.ChickenHatObject, ChickenHat)
 
 	self.Core = _G.Core
-
 	self._maid = self.Core.Utils.Maid.new()
 
-	self._player = player
-	self._tool_data = tool_data
-	self._player_object = player_object
+	self._player = player :: Player
+	self._tool_data = tool_data :: types.ToolData
+	self._player_object = player_object :: types.PlayerObject
 
-	self._maid.BaseAccessory = self.Core.Components[BASE_ACCESSORY_PATH].new(player, tool_data)
+	self._maid.BaseAccessory = BASE_ACCESSORY.new(player, tool_data) :: types.BaseAccessoryObject
 
 	return self
 end

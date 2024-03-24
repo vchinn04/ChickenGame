@@ -611,6 +611,13 @@ function EffectManager.EventHandler(): nil
 		return
 	end))
 
+	Maid:GiveTask(Core.Utils.Net:RemoteEvent("PiggyHatSkill").OnClientEvent:Connect(function(is_hit: boolean)
+		if is_hit then
+			Core.Fire("CameraBlur", 5)
+			Core.Fire("Blind", 5)
+		end
+	end))
+
 	Maid:GiveTask(Core.Subscribe("MiningTrigger", function(status: boolean, inst: Instance): nil
 		if status then
 			EffectManager.FocusCharacter(inst, nil, nil, true)
@@ -684,23 +691,21 @@ function EffectManager.EventHandler(): nil
 			function(
 				server_tick: number,
 				tool_name: string,
-				projectile_name: string,
+				projectile_id: string,
 				origin_position: Vector3,
 				direction: Vector3,
 				velocity: number? | Vector3?,
 				acceleration: Vector3?,
 				target: Vector3
 			): nil
-				print("CLIENT FIRE: ", tool_name)
-				if not Maid[tool_name] then
-					print(tool_name)
+				local object_key = `{tool_name}_{projectile_id}`
+				if not Maid[object_key] then
 					local bullet_template = Core.Utils.UtilityFunctions.ConvertToProjectile(
-						Core.Items:FindFirstChild(projectile_name):Clone():Clone()
+						Core.Items:FindFirstChild(projectile_id):Clone():Clone()
 					)
 					bullet_template.Parent = game.ReplicatedStorage
 					local tool_data: {} = Core.ItemDataManager.GetItem(Core.ItemDataManager.NameToId(tool_name))
 					local spin_speed: number = 0
-					print(tool_data)
 					if tool_data and tool_data.SpinSpeed then
 						spin_speed = tool_data.SpinSpeed
 					end
@@ -710,7 +715,7 @@ function EffectManager.EventHandler(): nil
 					end
 
 					if spin_speed > 0 then
-						Maid[tool_name] = ProjectileVisualiser.new(
+						Maid[object_key] = ProjectileVisualiser.new(
 							nil,
 							bullet_template,
 							function(active_cast, segmentOrigin, segmentDirection, length, _, cosmeticBulletObject)
@@ -754,7 +759,7 @@ function EffectManager.EventHandler(): nil
 							end
 						)
 					else
-						Maid[tool_name] = ProjectileVisualiser.new(nil, bullet_template)
+						Maid[object_key] = ProjectileVisualiser.new(nil, bullet_template)
 					end
 				end
 
@@ -776,7 +781,7 @@ function EffectManager.EventHandler(): nil
 				end
 
 				local active_cast: {} =
-					Maid[tool_name]:Fire(origin_position, direction, velocity, tick() - server_tick, acceleration)
+					Maid[object_key]:Fire(origin_position, direction, velocity, tick() - server_tick, acceleration)
 
 				active_cast.UserData.TargetDecals = target_decals
 				active_cast.UserData.Target = target

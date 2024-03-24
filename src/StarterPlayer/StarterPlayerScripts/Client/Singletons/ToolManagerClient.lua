@@ -228,7 +228,7 @@ end
 function ToolManager.Start(): nil
 	ToolManager.EventHandler()
 	Core.Utils.Net:RemoteEvent("AddItem"):FireServer("Basket")
-	Core.Utils.Net:RemoteEvent("AddItem"):FireServer("FoxHat")
+	Core.Utils.Net:RemoteEvent("AddItem"):FireServer("BullHat")
 
 	return
 end

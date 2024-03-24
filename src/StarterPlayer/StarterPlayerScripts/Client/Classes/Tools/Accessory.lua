@@ -23,6 +23,7 @@ Accessory.__index = Accessory
 	</Authors>
 --]]
 
+local types = require(script.Parent.Parent.Parent.ClientTypes)
 --*************************************************************************************************--
 
 function Accessory:GetId(): string?
@@ -39,8 +40,8 @@ function Accessory:Destroy(): nil
 	return
 end
 
-function Accessory.new(tool_obj: Tool, tool_data: { [string]: any }): {}
-	local self = setmetatable({}, Accessory)
+function Accessory.new(tool_obj: Tool, tool_data: types.ToolData): types.AccessoryObject
+	local self: types.AccessoryObject = setmetatable({} :: types.AccessoryObject, Accessory)
 	self.Core = _G.Core
 
 	self._tool_data = tool_data

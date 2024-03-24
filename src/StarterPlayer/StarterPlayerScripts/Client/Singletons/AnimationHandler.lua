@@ -365,6 +365,11 @@ function AnimationHandler.EventHandler(): nil
 		return
 	end))
 
+	Maid:GiveTask(Core.Subscribe("DoubleJump", function(status: boolean): nil
+		Maid.CoreAnimObject:PlayAnimation("DoubleJump", nil, nil, Enum.AnimationPriority.Action)
+		return
+	end))
+
 	Maid:GiveTask(Core.Subscribe("Crouch", function(status: boolean): nil
 		if status then
 			Maid.CoreAnimObject:PlayAnimation("JumpUp", nil, nil, Enum.AnimationPriority.Action)

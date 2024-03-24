@@ -39,7 +39,7 @@ Nest.__index = Nest
 local INTERACT_PROMPT_PATH = "Misc/InteractPrompt"
 
 local INTERACTION_SUCCESS_SERVER_EVENT = "InteractionSuccess"
-
+local types = require(script.Parent.Parent.Parent.ClientTypes)
 --*************************************************************************************************--
 
 function Nest:Interact(): nil
@@ -100,8 +100,8 @@ function Nest:Destroy(): nil
 	return
 end
 
-function Nest.new(inst, Core, interaction_data): { [string]: any }
-	local self = setmetatable({}, Nest)
+function Nest.new(inst, Core, interaction_data: types.InteractionData): types.NestObject
+	local self: types.NestObject = setmetatable({} :: types.NestObject, Nest)
 	self._instance = inst
 	self.Core = Core
 	self._maid = Core.Utils.Maid.new()

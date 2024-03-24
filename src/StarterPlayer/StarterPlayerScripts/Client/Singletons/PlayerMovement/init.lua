@@ -84,7 +84,7 @@ local SPEED_OVERWEIGHT_MULTIPLIER: number = 0.65
 local CANCEL_JUMP_EVENT: string = "CancelJump"
 local CANCEL_SPRINT_EVENT: string = "CancelSprint"
 
-local KNOCKBACK_VELOCITY_MULTIPLIER: number = 100
+local KNOCKBACK_VELOCITY_MULTIPLIER: number = 85
 local JUMP_STAMINA: number = 25
 
 local TILT_TWEEN_INFO = TweenInfo.new(
@@ -203,12 +203,55 @@ function PlayerMovement.Knockback(direction: Vector3, velocity: number, duration
 
 	Core.Fire("Knockback", true)
 	Core.Humanoid.AutoRotate = false
-	Core.Character.HumanoidRootPart.AssemblyLinearVelocity = direction * velocity -- add a linear velocity in Knockback direction
+	-- Core.Character.HumanoidRootPart.AssemblyLinearVelocity = direction * velocity -- add a linear velocity in Knockback direction
+	-- Core.Character.HumanoidRootPart:ApplyImpulse(direction * velocity)
+	local lin_velocity = Instance.new("LinearVelocity")
+	direction = direction.Unit
+	lin_velocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Line
+	lin_velocity.LineDirection = direction.Unit
+	lin_velocity.LineVelocity = velocity
+	lin_velocity.Attachment0 = Core.HumanoidRootPart:WaitForChild("RootAttachment")
+	Core.Humanoid.AutoRotate = false
+	lin_velocity.Parent = Core.HumanoidRootPart
+	lin_velocity.ForceLimitsEnabled = false
 
-	Core.Promise.delay(duration):finally(function()
+	Core.Utils.Promise.delay(duration):finally(function()
 		Core.Fire("Knockback", false)
-		Core.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0) -- remove the Knockback velocity
+		-- Core.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0) -- remove the Knockback velocity
+		lin_velocity:Destroy()
 		Core.Humanoid.AutoRotate = true
+	end)
+
+	return
+end
+
+function PlayerMovement.Charge(direction: Vector3, velocity: number, duration: number): nil
+	if not velocity then
+		velocity = KNOCKBACK_VELOCITY_MULTIPLIER
+	end
+
+	if not duration then
+		duration = 0.5
+	end
+
+	local lin_velocity = Instance.new("LinearVelocity")
+	direction = direction.Unit
+	lin_velocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Line
+	lin_velocity.LineDirection = direction.Unit
+	lin_velocity.LineVelocity = velocity
+	lin_velocity.Attachment0 = Core.HumanoidRootPart:WaitForChild("RootAttachment")
+	Core.Humanoid.AutoRotate = false
+	lin_velocity.Parent = Core.HumanoidRootPart
+	lin_velocity.ForceLimitsEnabled = false
+	-- Core.Character.HumanoidRootPart.AssemblyLinearVelocity = direction * velocity -- add a linear velocity in Knockback direction
+	Core.Fire("Knockback", true)
+
+	Core.Utils.Promise.delay(duration):finally(function()
+		Core.Fire("Knockback", false)
+
+		-- Core.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0) -- remove the Knockback velocity
+		Core.Humanoid.AutoRotate = true
+		lin_velocity:Destroy()
 	end)
 
 	return
@@ -233,6 +276,9 @@ function PlayerMovement.Jump(): nil
 		return
 	end
 
+	if Can_Double_Jump then
+		Core.Fire("DoubleJump")
+	end
 	Can_Double_Jump = false
 	Core.Humanoid.JumpPower = DEFAULT_JUMP_POWER + DEFAULT_JUMP_POWER * Jump_Count * JUMP_ADDITION_MULTIPLIER
 	Jump_Count += 1

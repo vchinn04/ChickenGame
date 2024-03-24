@@ -1,3 +1,5 @@
+local types = require(script.Parent.Parent.ServerTypes)
+
 local InteractionManager = {
 	Name = "InteractionManager",
 }
@@ -52,12 +54,16 @@ local InteracationClasses = {}
 -- 	end,
 -- })
 
-local InteractionInstances = {}
+local InteractionInstances = {} :: {
+	Instance: {
+		string: types.InteractionClassObject,
+	},
+}
 
 --*************************************************************************************************--
 
-function InteractionManager.GetInteracationClass(class_name: string): {}?
-	local interaction_class = InteracationClasses[class_name]
+function InteractionManager.GetInteracationClass(class_name: string): types.InteractionClass?
+	local interaction_class: types.InteractionClass? = InteracationClasses[class_name]
 
 	if interaction_class then
 		return interaction_class
@@ -66,7 +72,7 @@ function InteractionManager.GetInteracationClass(class_name: string): {}?
 	local succ, res = pcall(function()
 		local class = Core.Utils.UtilityFunctions.FindObjectWithPath(Core.Classes.Interactables, class_name)
 		if class then
-			local Obj = require(class)
+			local Obj: types.InteractionClass = require(class)
 			InteracationClasses[class_name] = Obj
 			return Obj
 		end
@@ -85,7 +91,7 @@ function InteractionManager.GetInteracationClass(class_name: string): {}?
 	end
 end
 
-function InteractionManager.CreateDrop(drop_name: string, drop_location: Vector3): Instance?
+function InteractionManager.CreateDrop(drop_name: string, drop_location: Vector3): Model?
 	local drop_id: string = Core.ItemDataManager.NameToId(drop_name)
 	if not drop_id then
 		drop_id = drop_name
@@ -99,7 +105,11 @@ function InteractionManager.CreateDrop(drop_name: string, drop_location: Vector3
 	end
 
 	local drop_item: Model = Core.Utils.UtilityFunctions.ToModel(drop_template:Clone())
-	local primary_part: Instance = drop_item.PrimaryPart
+	local primary_part: BasePart? = drop_item.PrimaryPart
+
+	if not primary_part then
+		warn("No primary part for drop item: ", drop_id, " found!")
+	end
 
 	for _, part: Instance in drop_item:GetDescendants() do
 		if part:IsA("BasePart") then
@@ -133,29 +143,29 @@ function InteractionManager.MakeLootable(object: Instance): nil
 	return
 end
 
-function InteractionManager.GetInteractableInstance(object: Instance, key: string): { [string]: any }?
+function InteractionManager.GetInteractableInstance(object: Instance, key: string): types.InteractionClassObject?
 	if InteractionInstances[object] and InteractionInstances[object][key] then
 		return InteractionInstances[object][key]
 	end
 
 	local object_tags: { [number]: string } = object:GetTags()
-	local interaction_class: { [string]: any }? = nil
-	local interactable_data: {} = Core.ItemDataManager.GetInteractableData()
+	local interaction_class = nil
+	local interactable_data: { string: types.InteractionData } = Core.ItemDataManager.GetInteractableData()
 
 	for _, tag: string in object_tags do
 		local interactable_entry = interactable_data[tag]
 
 		if interactable_entry then
-			interaction_class = interactable_entry.Class
+			interaction_class = InteractionManager.GetInteracationClass(interactable_entry.Class)
 			if not interaction_class then
 				continue
 			end
 
 			if InteractionInstances[object] then
-				InteractionInstances[object][tag] = interaction_class.new(object, Core)
+				InteractionInstances[object][tag] = interaction_class.new(object, Core, interactable_entry)
 			else
 				InteractionInstances[object] = {
-					[tag] = interaction_class.new(object, Core),
+					[tag] = interaction_class.new(object, Core, interactable_entry),
 				}
 			end
 		end
@@ -169,7 +179,7 @@ function InteractionManager.GetInteractableInstance(object: Instance, key: strin
 end
 
 function InteractionManager.BinderSetup(): nil
-	for key: string, entry: {} in Core.ItemDataManager.GetInteractableData() do
+	for key: string, entry: types.InteractionData in Core.ItemDataManager.GetInteractableData() do
 		local maid_key: string = key .. "Binder"
 		entry.Id = key
 
@@ -214,8 +224,8 @@ function InteractionManager.EventHandler(): nil
 				if not object then
 					return
 				end
-				local args: {} = { ... }
-				local interaction_instance: Instance = InteractionManager.GetInteractableInstance(object, key)
+				local args: { any } = { ... }
+				local interaction_instance = InteractionManager.GetInteractableInstance(object, key)
 				if interaction_instance then
 					interaction_instance:Interact(player, table.unpack(args))
 				end

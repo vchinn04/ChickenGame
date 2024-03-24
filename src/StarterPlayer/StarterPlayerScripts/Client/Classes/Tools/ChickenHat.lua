@@ -23,6 +23,7 @@ ChickenHat.__index = ChickenHat
 	</Authors>
 --]]
 
+local types = require(script.Parent.Parent.Parent.ClientTypes)
 --*************************************************************************************************--
 
 function ChickenHat:GetId(): string?
@@ -41,8 +42,8 @@ function ChickenHat:Destroy(): nil
 	return
 end
 
-function ChickenHat.new(tool_obj: Tool, tool_data: { [string]: any }): {}
-	local self = setmetatable({}, ChickenHat)
+function ChickenHat.new(tool_obj: Tool, tool_data: types.ToolData): types.ChickenHatObject
+	local self: types.ChickenHatObject = setmetatable({} :: types.ChickenHatObject, ChickenHat)
 	self.Core = _G.Core
 
 	self._tool_data = tool_data

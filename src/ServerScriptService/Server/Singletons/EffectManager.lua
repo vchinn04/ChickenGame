@@ -1,3 +1,5 @@
+local types = require(script.Parent.Parent.ServerTypes)
+
 local EffectManager = {
 	Name = "EffectManager",
 }
@@ -46,11 +48,16 @@ local Core
 local Maid
 
 --*************************************************************************************************--
-local EffectObject = {}
+local EffectObject: types.EffectObjectClass = {} :: types.EffectObjectClass
 EffectObject.__index = EffectObject
 
-function EffectObject:GetEffect(effect_name: string, parent: Instance, skip_attachment: boolean?)
-	if self._effects[parent.Name] and self._effects[parent.Name][effect_name] then
+function EffectObject:GetEffect(
+	effect_name: string,
+	parent: Instance,
+	skip_attachment: boolean?,
+	skip_cache: boolean?
+): Attachment? | { Instance }?
+	if not skip_cache and self._effects[parent.Name] and self._effects[parent.Name][effect_name] then
 		return self._effects[parent.Name][effect_name]
 	end
 
@@ -66,13 +73,16 @@ function EffectObject:GetEffect(effect_name: string, parent: Instance, skip_atta
 				cloned_effect.Parent = attachment
 			end
 
-			if not self._effects[parent.Name] then
-				self._effects[parent.Name] = {}
-			end
-
 			clone_effect:Destroy()
 
-			self._effects[parent.Name][effect_name] = attachment
+			if not skip_cache then
+				if not self._effects[parent.Name] then
+					self._effects[parent.Name] = {}
+				end
+
+				self._effects[parent.Name][effect_name] = attachment
+			end
+
 			return attachment
 		else
 			local clone_table: {} = clone_effect:GetChildren()
@@ -81,30 +91,40 @@ function EffectObject:GetEffect(effect_name: string, parent: Instance, skip_atta
 				cloned_effect.Parent = parent
 			end
 
-			if not self._effects[parent.Name] then
-				self._effects[parent.Name] = {}
-			end
-
 			clone_effect:Destroy()
 
-			self._effects[parent.Name][effect_name] = clone_table
+			if not skip_cache then
+				if not self._effects[parent.Name] then
+					self._effects[parent.Name] = {}
+				end
+
+				self._effects[parent.Name][effect_name] = clone_table
+			end
+
 			return clone_table
 		end
 	end
 	return
 end
 
-function EffectObject:Emit(effect_name: string, effect_parent: Instance, emit_amount: number, skip_attachment: boolean?)
-	local effect_attachment: Instace | {} = self:GetEffect(effect_name, effect_parent, skip_attachment)
+function EffectObject:Emit(
+	effect_name: string,
+	effect_parent: Instance,
+	emit_amount: number,
+	skip_attachment: boolean?
+): nil
+	local effect_attachment: Attachment? | { Instance }? = self:GetEffect(effect_name, effect_parent, skip_attachment)
 
 	if not effect_attachment then
 		return
 	end
 
-	local effect_table: Instace | {} = effect_attachment
+	local effect_table: { Instance }
 
 	if typeof(effect_attachment) == "Instance" then
 		effect_table = effect_attachment:GetChildren()
+	else
+		effect_table = effect_attachment
 	end
 
 	for _, effect: Instance in effect_table do
@@ -120,35 +140,48 @@ function EffectObject:Emit(effect_name: string, effect_parent: Instance, emit_am
 		end
 
 		Core.Utils.Promise.delay(delay_amount):andThen(function()
-			effect:Emit(custom_count)
+			if effect:IsA("ParticleEmitter") then
+				effect:Emit(custom_count)
+			end
 		end)
 	end
+	return
 end
 
-function EffectObject:Enable(effect_name: string, effect_parent: Instance, status: boolean, skip_attachment: boolean?)
-	local effect_attachment: Instace | {} = self:GetEffect(effect_name, effect_parent, skip_attachment)
+function EffectObject:Enable(
+	effect_name: string,
+	effect_parent: Instance,
+	status: boolean,
+	skip_attachment: boolean?
+): nil
+	local effect_attachment: Attachment? | { Instance }? = self:GetEffect(effect_name, effect_parent, skip_attachment)
 
 	if not effect_attachment then
 		return
 	end
 
-	local effect_table: Instace | {} = effect_attachment
+	local effect_table: { Instance }
 
 	if typeof(effect_attachment) == "Instance" then
 		effect_table = effect_attachment:GetChildren()
+	else
+		effect_table = effect_attachment
 	end
 
 	for _, effect: Instance in effect_table do
-		effect.Enabled = status
+		if effect:IsA("ParticleEmitter") then
+			effect.Enabled = status
+		end
 	end
+	return
 end
 
-function EffectObject:CloneEffect(effect_name: string, effect_parent: Instance)
-	local effect_attachment: Instace | {} = self:GetEffect(effect_name, effect_parent, true)
+function EffectObject:CloneEffect(effect_name: string, effect_parent: Instance): Attachment? | { Instance }?
+	local effect_attachment: Attachment? | { Instance }? = self:GetEffect(effect_name, effect_parent, true)
 	return effect_attachment
 end
 
-function EffectObject:Destroy()
+function EffectObject:Destroy(): nil
 	for key: string, entry: {} in self._effects do -- Clear out effect table and destroy cloned effects
 		for ckey: string, effect in entry do
 			if typeof(effect) == "table" then
@@ -166,6 +199,7 @@ function EffectObject:Destroy()
 
 	self._effects = nil
 	self = nil
+	return
 end
 --*************************************************************************************************--
 
@@ -183,8 +217,8 @@ function EffectManager.Emit(object: Instance?, emit_amount: number): nil
 	return
 end
 
-function EffectManager.Create(path: string)
-	local self = setmetatable({}, EffectObject)
+function EffectManager.Create(path: string): types.EffectObject
+	local self: types.EffectObject = setmetatable({} :: types.EffectObject, EffectObject)
 	self._effects = {}
 	self._folder = Core.EffectsFolder
 
@@ -193,7 +227,7 @@ function EffectManager.Create(path: string)
 			if i == "." then
 				continue
 			end
-			self._folder = self._folder[i]
+			self._folder = self._folder[i] :: Folder
 		end
 	end
 
@@ -212,7 +246,6 @@ end
 function EffectManager.Init(): nil
 	Core = _G.Core
 	Maid = Core.Utils.Maid.new()
-	EffectTable = {}
 
 	return
 end

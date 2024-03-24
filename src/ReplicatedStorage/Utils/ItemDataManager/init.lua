@@ -13,6 +13,7 @@ local AttachmentCache = {}
 local NameToId = {}
 local DataTables = {}
 local AttachmentTables = {}
+local ItemSizeCache = {}
 
 local StoreItemCache = {}
 
@@ -28,7 +29,7 @@ local EQUIPABLE_CATEGORIES = {
 local USABLE_CATEGORIES = {
 	["Consumable"] = true,
 }
-
+local ONE_VECTOR: Vector3 = Vector3.new(1, 1, 1)
 function ItemDataManager.GenerateCache()
 	print(DataTables)
 	for table_index, data_table in DataTables do
@@ -43,13 +44,10 @@ function ItemDataManager.GenerateCache()
 end
 
 function ItemDataManager.NameToId(item_name: string)
-	print(NameToId[item_name])
-	print(NameToId, item_name)
 	return NameToId[item_name]
 end
 
 function ItemDataManager.GetItem(item_id)
-	print(item_id, ItemCache)
 	local table_entry = ItemCache[item_id]
 	if table_entry ~= nil then
 		return table_entry
@@ -146,6 +144,27 @@ function ItemDataManager.GetStoreItem(item_path: string)
 	StoreItemCache[item_path] = item_entry
 
 	return item_entry
+end
+
+function ItemDataManager.GetItemSize(object_id: string): Vector3
+	if ItemSizeCache[object_id] then
+		return ItemSizeCache[object_id]
+	end
+	local item: Model | Part = Core.Items:WaitForChild(object_id, 3)
+
+	if item then
+		if item:IsA("Model") then
+			ItemSizeCache[object_id] = item:GetExtentsSize()
+		else
+			ItemSizeCache[object_id] = item.Size
+		end
+
+		return ItemSizeCache[object_id]
+	else
+		print("OBJECT: ", object_id, " NOT FOUND. ItemDataManager.GetItemSize")
+	end
+
+	return ONE_VECTOR
 end
 
 function ItemDataManager.GetAnims()

@@ -1,3 +1,5 @@
+local types = require(script.Parent.Parent.ServerTypes)
+
 local ToolManager = {
 	Name = "ToolManager",
 }
@@ -32,7 +34,6 @@ local ToolManager = {
 		RoGuruu (770772041)
 	</Authors>
 --]]
-local Types = require(game.ReplicatedStorage:WaitForChild("Utils"):WaitForChild("ServerTypes"))
 
 local Core
 local Maid
@@ -76,7 +77,7 @@ local USE_FUNCTIONS = {
 }
 --*************************************************************************************************--
 
-function ToolManager.GetToolClass(class_name: string): {}?
+function ToolManager.GetToolClass(class_name: string)
 	local tool_class = ToolClasses[class_name]
 
 	if tool_class then
@@ -108,8 +109,8 @@ end
 -- Add a tool to the player's backpack
 --tool_id ---> Id of the tool to add to backpack
 function ToolManager.AddTool(player: Player, tool_id: string): Tool?
-	local player_object: Types.IPlayer = Core.DataManager.GetPlayerObject(player) -- Get the player's PlayerClass instance
-	local tool_data: {} = Core.ItemDataManager.GetItem(tool_id)
+	local player_object: types.PlayerObject = Core.DataManager.GetPlayerObject(player) -- Get the player's PlayerClass instance
+	local tool_data: types.ToolData = Core.ItemDataManager.GetItem(tool_id)
 	local tool_name: string = tool_data.Name
 	local tool_class_name: string = tool_data.Class
 
@@ -121,15 +122,15 @@ function ToolManager.AddTool(player: Player, tool_id: string): Tool?
 		return
 	end
 
-	local tool_class: {}? = ToolManager.GetToolClass(tool_class_name) -- ToolClasses[tool_class_name]
+	local tool_class = ToolManager.GetToolClass(tool_class_name) -- ToolClasses[tool_class_name]
 
-	local player_data: {}? = Core.DataManager.GetPlayerData(player)
-	local item_player_entry: {} = player_data.Items[tool_id]
+	local player_data: types.PlayerData = Core.DataManager.GetPlayerData(player)
+	local item_player_entry: types.PlayerDataItemEntry? = player_data.Items[tool_id]
 	if item_player_entry and not item_player_entry.Equipped then
 		Core.DataManager.RemoveSpace(player, tool_data.Weight)
 	end
 
-	local tool_object: {} = player_object:AddTool(tool_name, tool_class, tool_data)
+	local tool_object = player_object:AddTool(tool_name, tool_class, tool_data)
 
 	return tool_object:GetToolObject()
 end
@@ -137,17 +138,17 @@ end
 -- Remove a tool from the player's backpack
 --tool_id ---> Id of the tool to remove from backpack
 function ToolManager.RemoveTool(player: Player, tool_name: string): boolean
-	local player_object: Types.IPlayer = Core.DataManager.GetPlayerObject(player) -- Get the player's PlayerClass instance
+	local player_object: types.PlayerObject = Core.DataManager.GetPlayerObject(player) -- Get the player's PlayerClass instance
 
 	if not player_object then
 		return false
 	end
 
-	local player_data: {}? = Core.DataManager.GetPlayerData(player)
+	local player_data: types.PlayerData = Core.DataManager.GetPlayerData(player)
 	local item_id: string = Core.ItemDataManager.NameToId(tool_name)
-	local item_player_entry: {} = player_data.Items[item_id]
+	local item_player_entry: types.PlayerDataItemEntry = player_data.Items[item_id]
 	if item_player_entry and item_player_entry.Equipped then
-		local tool_data: {} = Core.ItemDataManager.GetItem(item_id)
+		local tool_data: types.ToolData = Core.ItemDataManager.GetItem(item_id)
 		Core.DataManager.AddSpace(player, tool_data.Weight)
 	end
 	player_object:RemoveTool(tool_name) -- remove it from player
@@ -159,7 +160,7 @@ end
 --tool_name ---> Name of the tool to equip
 function ToolManager.EquipItem(player: Player, tool_name: string): boolean
 	print("Handle Tool Equipal!")
-	local player_object: Types.IPlayer = Core.DataManager.GetPlayerObject(player)
+	local player_object: types.PlayerObject = Core.DataManager.GetPlayerObject(player)
 
 	if not player_object then
 		print("No player object found!")
@@ -172,9 +173,9 @@ end
 
 -- Unequip a tool in player's backpack.
 --tool_name ---> Name of the tool to unequip
-function ToolManager.UnequipItem(player: Player, tool_name: string): boolean
+function ToolManager.UnequipItem(player: Player, tool_name: string): boolean?
 	--print("Handle Tool Removal!")
-	local player_object: Types.IPlayer = Core.DataManager.GetPlayerObject(player)
+	local player_object: types.PlayerObject = Core.DataManager.GetPlayerObject(player)
 
 	if not player_object then
 		return false
@@ -194,7 +195,7 @@ function ToolManager.EventHandler(): nil
 	end)
 
 	Core.Utils.Net:RemoteEvent("UnequipItem").OnServerEvent:Connect(function(player: Player, tool_name: string)
-		local unequip_status: boolean = ToolManager.UnequipItem(player, tool_name)
+		local unequip_status: boolean? = ToolManager.UnequipItem(player, tool_name)
 
 		if unequip_status then
 			Core.Utils.Net:RemoteEvent("UnequipItem"):FireClient(player, tool_name)
@@ -202,18 +203,18 @@ function ToolManager.EventHandler(): nil
 	end)
 
 	Core.Utils.Net:RemoteEvent("AddItem").OnServerEvent:Connect(function(player: Player, tool_id: string)
-		local tool_add_status: Tool? = ToolManager.AddTool(player, tool_id)
+		local tool_object: Tool? = ToolManager.AddTool(player, tool_id)
 
-		if tool_add_status then
-			Core.Utils.Net:RemoteEvent("AddItem"):FireClient(player, tool_id, tool_add_status)
+		if tool_object then
+			Core.Utils.Net:RemoteEvent("AddItem"):FireClient(player, tool_id, tool_object)
 		end
 	end)
 
 	Core.Subscribe("AddItem", function(player: Player, tool_id: string)
-		local tool_add_status: Tool? = ToolManager.AddTool(player, tool_id)
+		local tool_object: Tool? = ToolManager.AddTool(player, tool_id)
 
-		if tool_add_status then
-			Core.Utils.Net:RemoteEvent("AddItem"):FireClient(player, tool_id, tool_add_status)
+		if tool_object then
+			Core.Utils.Net:RemoteEvent("AddItem"):FireClient(player, tool_id, tool_object)
 		end
 	end)
 
@@ -230,13 +231,13 @@ function ToolManager.EventHandler(): nil
 			return
 		end
 
-		local item_entry: {} = player_data.Items[item_id]
+		local item_entry: types.PlayerDataItemEntry = player_data.Items[item_id]
 		if not item_entry or item_entry.Amount < 1 then
 			print("Player: ", player.Name, " Doesnt have usable item with id: ", item_id)
 			return
 		end
 
-		local item_data: {} = Core.ItemDataManager.GetItem(item_id)
+		local item_data: types.ToolData = Core.ItemDataManager.GetItem(item_id)
 		if not item_data then
 			return false
 		end
@@ -266,7 +267,7 @@ function ToolManager.EventHandler(): nil
 	Core.Utils.Net
 		:RemoteEvent("DropItem").OnServerEvent
 		:Connect(function(player: Player, tool_id: string, tool_state: string, loc)
-			local tool_data: {} = Core.ItemDataManager.GetItem(tool_id)
+			local tool_data: types.ToolData = Core.ItemDataManager.GetItem(tool_id)
 
 			if tool_data then
 				Core.Utils.Net:RemoteEvent("UnequipItem"):FireClient(player, tool_data.Name)
@@ -300,6 +301,8 @@ function ToolManager.Init(): nil
 	Core.Utils.Net:RemoteEvent("AttackSuccess")
 	Core.Utils.Net:RemoteEvent("BulkAddition")
 	Core.Utils.Net:RemoteEvent("HidePlayer")
+	Core.Utils.Net:RemoteEvent("PiggyHatSkill")
+
 	return
 end
 

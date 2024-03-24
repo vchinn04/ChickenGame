@@ -28,7 +28,7 @@ UIInteractable.__index = UIInteractable
 --]]
 
 local INTERACT_PROMPT_PATH = "Misc/InteractPrompt"
-
+local types = require(script.Parent.Parent.Parent.ClientTypes)
 --*************************************************************************************************--
 
 function UIInteractable:Interact(): nil
@@ -50,14 +50,14 @@ end
 
 function UIInteractable.new(
 	inst: Instance,
-	Core: { [string]: any },
-	interaction_data: { [string]: any }
-): { [string]: any }
-	local self = setmetatable({}, UIInteractable)
+	Core: types.Core,
+	interaction_data: types.InteractionData
+): types.UIInteractableObject
+	local self: types.UIInteractableObject = setmetatable({} :: types.UIInteractableObject, UIInteractable)
 	self.Core = Core
 	self._maid = Core.Utils.Maid.new()
 	self._instance = inst
-	self._is_holding = false
+
 	self._data = interaction_data
 
 	self._maid.PickupPromptManager = Core.Components[INTERACT_PROMPT_PATH].new(inst, interaction_data.Name)

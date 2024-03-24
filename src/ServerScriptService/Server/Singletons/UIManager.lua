@@ -1,3 +1,5 @@
+local types = require(script.Parent.Parent.ServerTypes)
+
 local UIManager = {
 	Name = "UIManager",
 }
@@ -49,7 +51,7 @@ function UIManager.EventHandler(): nil
 		end
 		local default_crafting_table = Core.Utils.ItemDataManager.GetCraftingTable("Default")
 		local item_crafting_entry = default_crafting_table[item_id]
-		local tool_data: {} = Core.ItemDataManager.GetItem(item_id)
+		local tool_data: types.ToolData = Core.ItemDataManager.GetItem(item_id)
 
 		if not item_crafting_entry then
 			return
@@ -114,7 +116,7 @@ function UIManager.EventHandler(): nil
 					return
 				end
 
-				local tool_data: {} = Core.ItemDataManager.GetItem(item_id)
+				local tool_data: types.ToolData = Core.ItemDataManager.GetItem(item_id)
 				local new_bank_space: number = player_data.General.BankSpace + tool_data.Weight
 				if new_bank_space > player_data.General.BankMaxSpace then
 					return
@@ -149,7 +151,7 @@ function UIManager.EventHandler(): nil
 					Core.DataManager.RemovePounds(player, amount, "BankPounds")
 					return
 				end
-				local tool_data: {} = Core.ItemDataManager.GetItem(item_id)
+				local tool_data: types.ToolData = Core.ItemDataManager.GetItem(item_id)
 
 				if not player_item_entry.BankAmount or player_item_entry.BankAmount <= 0 then
 					return
